@@ -12,3 +12,5 @@
 			1. matMul_cpu.c		// C Code for CPU Implementation
 			2. matMul_gpu.cu	// CUDA code for GPU
 
+
+		
