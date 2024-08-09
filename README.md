@@ -1,6 +1,6 @@
 
 
-#----------------------------------------Prabhav Talukdar EE23M053-------------------------------------------
+#Prabhav Talukdar EE23M053
 
 	This repo consists of all project files and reports done during my masters at IIT Madras.
 	
@@ -9,6 +9,6 @@
 		compare result with CPU implementation, using basic profiling.
 		
 		Code File:
-			a. matMul_cpu.c		// C Code for CPU Implementation
-			b. matMul_gpu.cu	// CUDA code for GPU
+			1. matMul_cpu.c		// C Code for CPU Implementation
+			2. matMul_gpu.cu	// CUDA code for GPU
 
