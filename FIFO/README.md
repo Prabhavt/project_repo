@@ -7,12 +7,16 @@
 	by storing and synchronizing data across varying clock frequencies, using 
 	control signals and pointers to handle data flow and avoid collisions or loss.
 
-	[!IMAGE_DESCRIPTION][https://vlsiverify.com/wp-content/uploads/2022/12/asynchronous-fifo-1024x578.gif]
-	
+ 	![alt text](asyncFIFO.png)
+
 	Modules:
 		twoflopsynchronizer	->	Two FF synchronizer to facilitate CDC
 		ptr_module		->	Handling write and read address pointer
 		memory			->	Memory module handling data
 		FIFO_top 		->	Top module integrating all sub-modules
+
+	Output signals:
+
+	![alt text](output_graph.png)
 	
 	
