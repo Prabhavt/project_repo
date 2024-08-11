@@ -1,4 +1,7 @@
 # Asynchronous FIFO design using verilog
+	
+	Author: Prabhav Talukdar
+	
 	An asynchronous FIFO (First In, First Out) is a type of buffer used to manage 
 	data between systems with different clock domains. It ensures data integrity 
 	by storing and synchronizing data across varying clock frequencies, using 
