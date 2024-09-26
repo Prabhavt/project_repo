@@ -1,5 +1,6 @@
 // Author:  Prabhav Talukdar
-// Cache Simulator : L1+VC
+
+// Cache Simulator : Reconfigurable L1+VC+L2
 #include<iostream>
 #include<math.h>
 #include<string>
@@ -31,26 +32,27 @@ using namespace std;
 //--------------------------------------------Cache Class----------------------------------------------------------------------
 
 class L1{
-    string              **mem;                         
+    string              **__cache_tag__;                         
     string              **__cachefulladdr__;
-    string              *victim;
-    int                 **valid;
-    int                 **dirty;
-    int                 *victim_dirty;
-    int                 **LRU_count;
-    int                 *victim_LRU;
-    unsigned int        set_no,display_setno;
-    unsigned int        L1_read_miss;
-    unsigned int        L1_write_miss;
-    unsigned int        L1_reads;
-    unsigned int        L1_writes;
+    string              *__VC__;
+    int                 **__cache_valid__;
+    int                 **__cache_dirty__;
+    int                 *__VC_dirty__;
+    int                 **__cache_LRU_count__;
+    int                 *__VC_LRU_count__;
+    unsigned int        __cache_setno__;
+    unsigned int        __cache_read_miss__;
+    unsigned int        __cache_write_miss__;
+    unsigned int        __cache_reads__;
+    unsigned int        __cache_writes__;
+
     unsigned int        cache, assoc, blocksize, tag, level, victimCache_blocks, num_cache_level;
     string              addr_bin;
     string              addr_hex;                        
     string              writeback_address;
     char                op;
-    unsigned int        read_L2;           // L1 -> L2  or  L2 -> Memory
-    unsigned int        write_back_L2;     //signals
+    unsigned int        rd_nextlevel;           // L1 -> L2  or  L2 -> Memory
+    unsigned int        wb_nextlevel;     //signals
     unsigned int        write_back;        //count of total write backs from L1
     unsigned int        swaps;
     unsigned int        swap_request;
@@ -66,50 +68,50 @@ public:
         victimCache_blocks  =V;
         num_cache_level     =num_level;
 
-        mem                 = new string *[(cache/(assoc*blocksize))];
+        __cache_tag__                 = new string *[(cache/(assoc*blocksize))];
         __cachefulladdr__   = new string *[(cache/(assoc*blocksize))];
-        valid               = new int    *[(cache/(assoc*blocksize))];
-        dirty               = new int    *[(cache/(assoc*blocksize))];
-        LRU_count           = new int    *[(cache/(assoc*blocksize))];
+        __cache_valid__               = new int    *[(cache/(assoc*blocksize))];
+        __cache_dirty__               = new int    *[(cache/(assoc*blocksize))];
+        __cache_LRU_count__           = new int    *[(cache/(assoc*blocksize))];
         
         //Assign Victim Cache if level = 1
         swaps           = 0;
         if(L==1 && V !=0){
-            victim          = new string [V];
-            victim_LRU      = new int [V];
-            victim_dirty    = new int [V];
+            __VC__          = new string [V];
+            __VC_LRU_count__      = new int [V];
+            __VC_dirty__    = new int [V];
             swap_request    = 0;
             for(int i=0; i<V; i++){
-                victim_LRU[i]   =V-1;
-                victim[i]       ="-1";
-                victim_dirty[i] =0;
+                __VC_LRU_count__[i]   =V-1;
+                __VC__[i]       ="-1";
+                __VC_dirty__[i] =0;
             }
         }
 
         for(int i=0; i<((cache/(assoc*blocksize)));i++){
-            mem[i]          = new string[assoc];
+            __cache_tag__ [i]          = new string[assoc];
             __cachefulladdr__[i]= new string[assoc];
-            valid[i]        = new int[assoc];
-            dirty[i]        = new int[assoc];
-            LRU_count[i]    = new int[assoc];
+            __cache_valid__[i]        = new int[assoc];
+            __cache_dirty__[i]        = new int[assoc];
+            __cache_LRU_count__[i]    = new int[assoc];
         }
 
         for(int i=0;i<(cache/(assoc*blocksize));i++){
             for(int j=0; j<assoc;j++){
-            mem[i][j]       ="-1";
-            valid[i][j]     =0;              //valid=0 : Not Valid          valid=1 : Valid
-            LRU_count[i][j] =assoc-1;
-            dirty[i][j]     =0;              //dirty=0 : Not Modified       dirty=1 : Modified
+            __cache_tag__ [i][j]       ="-1";
+            __cache_valid__[i][j]     =0;              //Valid=0 : Not Valid          Valid=1 : Valid
+            __cache_LRU_count__[i][j] =assoc-1;
+            __cache_dirty__[i][j]     =0;              //Dirty=0 : Not Modified       Dirty=1 : Modified
             }
         }
 
-        L1_read_miss        =0;
-        L1_reads            =0;
-        L1_writes           =0;
-        L1_write_miss       =0;
-        read_L2             =0;
-        write_back_L2       =0;   
-        write_back          =0;                  
+        __cache_read_miss__        =0;
+        __cache_reads__            =0;
+        __cache_writes__           =0;
+        __cache_write_miss__       =0;
+        rd_nextlevel                    =0;
+        wb_nextlevel              =0;   
+        write_back                 =0;                  
         }
     }
     void put_addr(char operation, string address){
@@ -117,21 +119,20 @@ public:
         op                  =operation;
         unsigned int add_dec=hex_to_dec(address);
         addr_bin            =dec_to_bin(add_dec);
-        unsigned int set_no =bin_to_dec( addr_bin, ((int)log2(blocksize)) , ((int)log2(cache/assoc))-1  );
-        display_setno       =set_no;
-        read_L2             =0; 
-        write_back_L2       =0;
+        unsigned int __cache_setno__ =bin_to_dec( addr_bin, ((int)log2(blocksize)) , ((int)log2(cache/assoc))-1  );
+        rd_nextlevel             =0; 
+        wb_nextlevel       =0;
     //---------------------------Read Operation------------------------------------------------------------------------------------------------------
 
             if(op=='r'){
                 
                 //Increment number of Reads 
-                L1_reads++;
+                __cache_reads__++;
 
                 //Check if any Invalid block is present in Cache(L1/L2) set
                 int empty_block =0;
                 for(int i=0; i<assoc; i++){
-                    if(valid[set_no][i]==0){
+                    if(__cache_valid__[__cache_setno__][i]==0){
                         empty_block=1;
                         break;
                     }                            
@@ -139,14 +140,14 @@ public:
                 
                 
                 for(int i=0; i<assoc; i++){
-                    string mem_FA_tag  =hex_to_bin(__cachefulladdr__[set_no][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                    string mem_FA_tag  =hex_to_bin(__cachefulladdr__[__cache_setno__][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
                     string addr_FA_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                     
                     //----------------------Read Hit-----------------------------------------------
                     //Comparing (tag+index) bits of Requested Address and Cache block address
                     if( !addr_FA_tag.compare(mem_FA_tag) ){
                         //-------LRU Update------------
-                        LRU_update(set_no, i); 
+                        LRU_update(__cache_setno__, i); 
                         break; 
                     }
             
@@ -154,7 +155,7 @@ public:
                     if(i==(assoc-1)){
                         
                         //Incrementing L1 Read miss count
-                        L1_read_miss+=1;
+                        __cache_read_miss__+=1;
 
                         //---------------Read Miss but Cache set have invalid Cache Line--------------------------- 
                         if(empty_block){
@@ -163,25 +164,25 @@ public:
                             //------------------------Read Signal to next Level--------------------------- 
 
                             //Signaling Next level cache/memory for Read
-                            read_L2=1;
+                            rd_nextlevel=1;
                             //Reseting empty block flag
                             empty_block=0;
 
                             for(int j=0; j<assoc; j++){
-                                if(valid[set_no][j]==0){
-                                    mem[set_no][j]                  =addr_bin.substr((int)log2(cache/assoc),tag);
-                                    __cachefulladdr__[set_no][j]    =address;
+                                if(__cache_valid__[__cache_setno__][j]==0){
+                                    __cache_tag__ [__cache_setno__][j]                  =addr_bin.substr((int)log2(cache/assoc),tag);
+                                    __cachefulladdr__[__cache_setno__][j]    =address;
 
-                                    valid[set_no][j]                =1;
-                                    dirty[set_no][j]                =0;
+                                    __cache_valid__[__cache_setno__][j]                =1;
+                                    __cache_dirty__[__cache_setno__][j]                =0;
                                     //-------LRU Update------------
-                                    LRU_update(set_no, j); 
+                                    LRU_update(__cache_setno__, j); 
                                     break;
                                 }
                             }
                             break;
                         }
-                        //---------------Read Miss but all valid blocks in cache set---------------------------   
+                        //---------------Read Miss but all Valid blocks in cache set---------------------------   
                         else if(victimCache_blocks && ~empty_block)
                         {
                             //-------------------If Victim Cache is present----------------------------------------
@@ -191,7 +192,7 @@ public:
                             int lru_pos         =-1;
                             //-------LRU position in cache------
                             for(int k=0; k<assoc; k++){
-                                if(LRU_count[set_no][k]==assoc-1){
+                                if(__cache_LRU_count__[__cache_setno__][k]==assoc-1){
                                     lru_pos             =k;
                                     break;
                                 }
@@ -200,7 +201,7 @@ public:
                             bool victim_hit = false;
                             int victim_pos  =-1;
                             for(int k=0; k<victimCache_blocks; k++){
-                                string vc_tag                    =hex_to_bin(victim[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                                string vc_tag                    =hex_to_bin(__VC__[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
                                 string addr_fullyassociative_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                                 //Comparing (tag+index) of L1 and tag of VC
                                 if(!addr_fullyassociative_tag.compare(vc_tag)){
@@ -212,66 +213,66 @@ public:
                                 
                             //--------Victim Cache Hit-----------
                             if(victim_hit){
-                                unsigned int victim_hex_dec =hex_to_dec(victim[victim_pos]);
+                                unsigned int victim_hex_dec =hex_to_dec(__VC__[victim_pos]);
                                 string victim_bin           =dec_to_bin(victim_hex_dec);
                                 
-                                mem[set_no][lru_pos]        =victim_bin.substr((int)log2(cache/assoc),tag);
-                                victim[victim_pos].swap(__cachefulladdr__[set_no][lru_pos]);
-                                swap(dirty[set_no][lru_pos],victim_dirty[victim_pos]);
+                                __cache_tag__ [__cache_setno__][lru_pos]        =victim_bin.substr((int)log2(cache/assoc),tag);
+                                __VC__[victim_pos].swap(__cachefulladdr__[__cache_setno__][lru_pos]);
+                                swap(__cache_dirty__[__cache_setno__][lru_pos],__VC_dirty__[victim_pos]);
                                 swaps++;
 
                                 LRU_VC_update(victim_pos);
                                 //-------LRU Update------------
-                                LRU_update(set_no, lru_pos); 
+                                LRU_update(__cache_setno__, lru_pos); 
                             }
                             //--------Victim Cache Miss------------
                             else{
                                 //----Read from next level---------
                                 //Signaling Next level cache/memory for Read 
-                                read_L2=1;
+                                rd_nextlevel=1;
                                 bool invalid_victim_block=false;
                                 int victimpos=-1;
                                 for(int k=0; k<victimCache_blocks; k++){
-                                    if(victim[k]=="-1"){
+                                    if(__VC__[k]=="-1"){
                                         invalid_victim_block=true;
                                         victimpos=k;
                                         break;
                                     }
                                 }
                                 if(invalid_victim_block){
-                                    victim[victimpos]                =__cachefulladdr__[set_no][lru_pos];
-                                    victim_dirty[victimpos]          = dirty[set_no][lru_pos];
+                                    __VC__[victimpos]                =__cachefulladdr__[__cache_setno__][lru_pos];
+                                    __VC_dirty__[victimpos]          = __cache_dirty__[__cache_setno__][lru_pos];
                                     
                                     //Bring in new data to cache
-                                    mem[set_no][lru_pos]              = addr_bin.substr((int)log2(cache/assoc),tag);
-                                    __cachefulladdr__[set_no][lru_pos]= address; 
-                                    dirty[set_no][lru_pos]            = 0;   
-                                    valid[set_no][lru_pos]            = 1;
+                                    __cache_tag__ [__cache_setno__][lru_pos]              = addr_bin.substr((int)log2(cache/assoc),tag);
+                                    __cachefulladdr__[__cache_setno__][lru_pos]= address; 
+                                    __cache_dirty__[__cache_setno__][lru_pos]            = 0;   
+                                    __cache_valid__[__cache_setno__][lru_pos]            = 1;
                                     
                                     //-------LRU Update------------
                                     LRU_VC_update(victimpos);
-                                    LRU_update(set_no, lru_pos); 
+                                    LRU_update(__cache_setno__, lru_pos); 
                                 }
                                 //------Victim Cache Set Full------------
                                 else{
                                     for(int k=0; k< victimCache_blocks; k++){
-                                        if(victim_LRU[k]==(victimCache_blocks-1)){
+                                        if(__VC_LRU_count__[k]==(victimCache_blocks-1)){
                                             //------Dirty Block has to be written back---------
-                                            if(victim_dirty[k]){
+                                            if(__VC_dirty__[k]){
                                                 write_back++;
-                                                write_back_L2=1;
-                                                writeback_address =victim[k];
+                                                wb_nextlevel=1;
+                                                writeback_address =__VC__[k];
                                             }
-                                            victim[k]                                 = __cachefulladdr__[set_no][lru_pos];
-                                            victim_dirty[k]                           = dirty[set_no][lru_pos];
-                                            mem[set_no][lru_pos]                      = addr_bin.substr((int)log2(cache/assoc),tag);
-                                            __cachefulladdr__[set_no][lru_pos]        = address;
-                                            valid[set_no][lru_pos]                    = 1;
-                                            dirty[set_no][lru_pos]                    = 0;
+                                            __VC__[k]                                 = __cachefulladdr__[__cache_setno__][lru_pos];
+                                            __VC_dirty__[k]                           = __cache_dirty__[__cache_setno__][lru_pos];
+                                            __cache_tag__ [__cache_setno__][lru_pos]                      = addr_bin.substr((int)log2(cache/assoc),tag);
+                                            __cachefulladdr__[__cache_setno__][lru_pos]        = address;
+                                            __cache_valid__[__cache_setno__][lru_pos]                    = 1;
+                                            __cache_dirty__[__cache_setno__][lru_pos]                    = 0;
                                             
                                             LRU_VC_update(k);
                                             //-------LRU Update------------
-                                            LRU_update(set_no, lru_pos); 
+                                            LRU_update(__cache_setno__, lru_pos); 
                                             break;
                                         }
                                     }
@@ -279,21 +280,21 @@ public:
                             }
                         }
                         else{        
-                            read_L2=1;
+                            rd_nextlevel=1;
                             for(int j=0; j<assoc; j++){
-                                if( LRU_count[set_no][j] == (assoc-1) ){                         
-                                    if(dirty[set_no][j]){
-                                        write_back_L2                   =1;
+                                if( __cache_LRU_count__[__cache_setno__][j] == (assoc-1) ){                         
+                                    if(__cache_dirty__[__cache_setno__][j]){
+                                        wb_nextlevel                   =1;
                                         write_back++;
-                                        writeback_address               = __cachefulladdr__[set_no][j];                             
+                                        writeback_address               = __cachefulladdr__[__cache_setno__][j];                             
                                     }
-                                    mem[set_no][j]                      = addr_bin.substr((int)log2(cache/assoc),tag);
-                                    __cachefulladdr__[set_no][j]        = address;
-                                    valid[set_no][j]                    = 1;
-                                    dirty[set_no][j]                    = 0;
+                                    __cache_tag__ [__cache_setno__][j]                      = addr_bin.substr((int)log2(cache/assoc),tag);
+                                    __cachefulladdr__[__cache_setno__][j]        = address;
+                                    __cache_valid__[__cache_setno__][j]                    = 1;
+                                    __cache_dirty__[__cache_setno__][j]                    = 0;
                                 
                                     //-------LRU Update------------
-                                    LRU_update(set_no, j); 
+                                    LRU_update(__cache_setno__, j); 
                                     break;
                                 }
                             }
@@ -306,13 +307,13 @@ public:
             if(op=='w'){
 
                 //Increment number of Writes
-                L1_writes++;
+                __cache_writes__++;
 
                 //Check if any Invalid block is present in Cache(L1/L2) set 
                 int empty_block  =0;
                 //---Checking Line capacity---
                 for(int i=0; i<assoc; i++){
-                    if(valid[set_no][i]==0){
+                    if(__cache_valid__[__cache_setno__][i]==0){
                         empty_block=1;
                         break;
                     }                            
@@ -320,15 +321,15 @@ public:
 
                 for(int i=0; i<assoc; i++){
 
-                    string mem_FA_tag  =hex_to_bin(__cachefulladdr__[set_no][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                    string mem_FA_tag  =hex_to_bin(__cachefulladdr__[__cache_setno__][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
                     string addr_FA_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                     //----------------------Write Hit-----------------------------------------------
                     //Comparing (tag+index) bits of Requested Address and Cache block address
                     if( !addr_FA_tag.compare(mem_FA_tag) ){
                         //------Dirty Bit Set----------
-                        dirty[set_no][i]    = 1;    
+                        __cache_dirty__[__cache_setno__][i]    = 1;    
                         //-------LRU Update------------
-                        LRU_update(set_no, i); 
+                        LRU_update(__cache_setno__, i); 
                         break;
                 }
 
@@ -336,31 +337,31 @@ public:
                 if((i==(assoc-1)))
                 {
                     //Incrementing L1 Write miss count
-                    L1_write_miss   +=1;
+                    __cache_write_miss__   +=1;
 
                     //-----No Write Allocate if Invalid Cache Block Present--------
                     if(empty_block){
 
                         //Signaling Next level cache/memory for Read
-                        read_L2          =1;
+                        rd_nextlevel          =1;
                         //Reseting empty block flag
                         empty_block      =0;
 
                         for(int j=0; j<assoc; j++){
-                            if(valid[set_no][j]==0){
-                                mem[set_no][j]               =addr_bin.substr((int)log2(cache/assoc),tag);
-                                __cachefulladdr__[set_no][j] =address;
+                            if(__cache_valid__[__cache_setno__][j]==0){
+                                __cache_tag__ [__cache_setno__][j]               =addr_bin.substr((int)log2(cache/assoc),tag);
+                                __cachefulladdr__[__cache_setno__][j] =address;
 
-                                valid[set_no][j]=1;
-                                dirty[set_no][j]=1;                
+                                __cache_valid__[__cache_setno__][j]=1;
+                                __cache_dirty__[__cache_setno__][j]=1;                
                                 //-------LRU Update------------
-                                LRU_update(set_no, j); 
+                                LRU_update(__cache_setno__, j); 
                                 break;
                             }
                         }            
                     }
                     //-------------------If Victim Cache is present--------------------------------
-                    //---------------Write Miss but all valid lines in Cache set---------------------------   
+                    //---------------Write Miss but all Valid lines in Cache set---------------------------   
                     else if(victimCache_blocks && ~empty_block)
                     {
                         //Increment Swap request
@@ -368,7 +369,7 @@ public:
                         int lru_pos         =-1;
                         //-------LRU position in cache------
                         for(int k=0; k<assoc; k++){
-                            if(LRU_count[set_no][k]==(assoc-1)){
+                            if(__cache_LRU_count__[__cache_setno__][k]==(assoc-1)){
                                 lru_pos     =k;
                                 break;
                             }
@@ -379,7 +380,7 @@ public:
                         int victim_pos  =-1;
                         
                         for(int k=0; k<victimCache_blocks; k++){
-                                string vc_tag                    =hex_to_bin(victim[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                                string vc_tag                    =hex_to_bin(__VC__[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
                                 string addr_fullyassociative_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                                 //Comparing (tag+index) of L1 and tag of VC
                                 if(!addr_fullyassociative_tag.compare(vc_tag)){
@@ -391,67 +392,67 @@ public:
                                 
                         //--------Victim Cache Hit-----------
                         if(victim_hit){
-                            unsigned int victim_hex_dec =hex_to_dec(victim[victim_pos]);
+                            unsigned int victim_hex_dec =hex_to_dec(__VC__[victim_pos]);
                             string victim_bin           =dec_to_bin(victim_hex_dec);
                             
-                            mem[set_no][lru_pos]        =victim_bin.substr((int)log2(cache/assoc),tag);
-                            victim[victim_pos].swap(__cachefulladdr__[set_no][lru_pos]);
-                            victim_dirty[victim_pos] = dirty[set_no][lru_pos];
-                            dirty[set_no][lru_pos]   =1;
+                            __cache_tag__ [__cache_setno__][lru_pos]        =victim_bin.substr((int)log2(cache/assoc),tag);
+                            __VC__[victim_pos].swap(__cachefulladdr__[__cache_setno__][lru_pos]);
+                            __VC_dirty__[victim_pos] = __cache_dirty__[__cache_setno__][lru_pos];
+                            __cache_dirty__[__cache_setno__][lru_pos]   =1;
                             swaps++;
                             LRU_VC_update(victim_pos);
                             //-------LRU Update------------
-                            LRU_update(set_no, lru_pos); 
+                            LRU_update(__cache_setno__, lru_pos); 
                         }
                         //--------Victim Cache Miss------------
                         else{
                             //----Read from next level and Write Allocate---------
                             //Signaling Next level cache/memory for Read 
-                            read_L2         =1;
+                            rd_nextlevel         =1;
                             bool invalid_victim_block=false;
                             int victimpos  =-1;
                             for(int k=0; k<victimCache_blocks; k++){
-                                if(victim[k]=="-1"){
+                                if(__VC__[k]=="-1"){
                                     invalid_victim_block=true;
                                     victimpos=k;
                                     break;
                                 }
                             }
                             if(invalid_victim_block){
-                                victim[victimpos]                =__cachefulladdr__[set_no][lru_pos];
-                                victim_dirty[victimpos]          = dirty[set_no][lru_pos];
+                                __VC__[victimpos]                =__cachefulladdr__[__cache_setno__][lru_pos];
+                                __VC_dirty__[victimpos]          = __cache_dirty__[__cache_setno__][lru_pos];
                                 
                                 //Bring in new data to cache
-                                mem[set_no][lru_pos]              = addr_bin.substr((int)log2(cache/assoc),tag);
-                                __cachefulladdr__[set_no][lru_pos]= address; 
-                                dirty[set_no][lru_pos]            = 1;
-                                valid[set_no][lru_pos]            = 1;
+                                __cache_tag__ [__cache_setno__][lru_pos]              = addr_bin.substr((int)log2(cache/assoc),tag);
+                                __cachefulladdr__[__cache_setno__][lru_pos]= address; 
+                                __cache_dirty__[__cache_setno__][lru_pos]            = 1;
+                                __cache_valid__[__cache_setno__][lru_pos]            = 1;
                                
                                 //------LRU Update------
                                 LRU_VC_update(victimpos);
-                                LRU_update(set_no, lru_pos); 
+                                LRU_update(__cache_setno__, lru_pos); 
                             }
                             //-----------Victim Cache Set Full---------------
                             else{
                                 for(int k=0; k< victimCache_blocks; k++){
-                                    if(victim_LRU[k]==(victimCache_blocks-1)){
+                                    if(__VC_LRU_count__[k]==(victimCache_blocks-1)){
                                         //------Dirty Block has to be written back---------
-                                        if(victim_dirty[k]){
+                                        if(__VC_dirty__[k]){
                                             write_back++;
-                                            write_back_L2                         =1;
-                                            writeback_address                     =victim[k];
+                                            wb_nextlevel                         =1;
+                                            writeback_address                     =__VC__[k];
                                         }
-                                        victim[k]                                 = __cachefulladdr__[set_no][lru_pos];
-                                        victim_dirty[k]                           = dirty[set_no][lru_pos];
-                                        mem[set_no][lru_pos]                      = addr_bin.substr((int)log2(cache/assoc),tag);
-                                        __cachefulladdr__[set_no][lru_pos]        = address;
-                                        valid[set_no][lru_pos]                    = 1;
-                                        dirty[set_no][lru_pos]                    = 1;
+                                        __VC__[k]                                 = __cachefulladdr__[__cache_setno__][lru_pos];
+                                        __VC_dirty__[k]                           = __cache_dirty__[__cache_setno__][lru_pos];
+                                        __cache_tag__ [__cache_setno__][lru_pos]                      = addr_bin.substr((int)log2(cache/assoc),tag);
+                                        __cachefulladdr__[__cache_setno__][lru_pos]        = address;
+                                        __cache_valid__[__cache_setno__][lru_pos]                    = 1;
+                                        __cache_dirty__[__cache_setno__][lru_pos]                    = 1;
                                         
                                         //------Victim Cache LRU update----------
                                         LRU_VC_update(k);
                                         //-------LRU Update------------
-                                        LRU_update(set_no, lru_pos); 
+                                        LRU_update(__cache_setno__, lru_pos); 
                                         break;
                                     }
                                 }
@@ -459,23 +460,23 @@ public:
                         }
                     }
                     else{
-                        read_L2         =1;
+                        rd_nextlevel         =1;
                         for(int j=0; j<assoc; j++){
                             //Replace The Lease Recently Used Dirty Block
-                            if(LRU_count[set_no][j] == assoc-1){
-                                if(dirty[set_no][j]){
-                                    //Write allocate and Write in L1_CACHE
+                            if(__cache_LRU_count__[__cache_setno__][j] == assoc-1){
+                                if(__cache_dirty__[__cache_setno__][j]){
+                                    //Write allocate and Write in L1 CACHE
                                     write_back++;
-                                    write_back_L2=1;
-                                    writeback_address = __cachefulladdr__[set_no][j];                                                               
+                                    wb_nextlevel=1;
+                                    writeback_address = __cachefulladdr__[__cache_setno__][j];                                                               
                                 }
 
-                                dirty[set_no][j]=1; 
-                                mem[set_no][j] = addr_bin.substr((int)log2(cache/assoc),tag);
-                                __cachefulladdr__[set_no][j]=address;
+                                __cache_dirty__[__cache_setno__][j]=1; 
+                                __cache_tag__ [__cache_setno__][j] = addr_bin.substr((int)log2(cache/assoc),tag);
+                                __cachefulladdr__[__cache_setno__][j]=address;
 
                                 //-------LRU Update------------
-                                LRU_update(set_no, j); 
+                                LRU_update(__cache_setno__, j); 
                                 break;
                             }                
                         }
@@ -487,30 +488,30 @@ public:
     }
 
 void LRU_VC_update(int pos){
-    int lru_count= victim_LRU[pos];
+    int lru_count= __VC_LRU_count__[pos];
     for(int i=0; i<victimCache_blocks; i++){
-        if(victim_LRU[i] < lru_count)
-            victim_LRU[i]++;
+        if(__VC_LRU_count__[i] < lru_count)
+            __VC_LRU_count__[i]++;
     }
-    victim_LRU[pos]=0;
+    __VC_LRU_count__[pos]=0;
 }
 
 //---------------------Updating Least Recently Used block Counter--------------------------------------
 void LRU_update(int set, int pos){
-    int write_lru_count=LRU_count[set][pos];
+    int write_lru_count=__cache_LRU_count__[set][pos];
     //-------LRU Update------------
     for (int k=0; k<assoc; k++){
-        if(LRU_count[set][k] < write_lru_count)
-        LRU_count[set][k] +=1;
+        if(__cache_LRU_count__[set][k] < write_lru_count)
+        __cache_LRU_count__[set][k] +=1;
     }
-    LRU_count[set][pos]= 0;
+    __cache_LRU_count__[set][pos]= 0;
 }
 //--------------------Signalling next Level of Memory---------------------------------------------------
 int getSignal(){
-    if(write_back_L2 && read_L2){
+    if(wb_nextlevel && rd_nextlevel){
         return 2;
     }
-    else if(read_L2 && !(write_back_L2)){
+    else if(rd_nextlevel && !(wb_nextlevel)){
         return 1;
     }
     return 0;
@@ -544,23 +545,23 @@ void print_data(){
         cout<<"Cache Size: "<<cache<<" Associativity: "<<assoc<<" BlockSize: "<<blocksize<<endl<<endl;
         for(int i=0;i<(cache/(assoc*blocksize));i++){
             printf("set no. %3d %4.4s",i,"  | ");
-            sort(mem[i],dirty[i],LRU_count[i]);
+            sort(__cache_tag__ [i],__cache_dirty__[i],__cache_LRU_count__[i]);
         for(int j=0; j<assoc;j++){
-            if(mem[i][j]!="-1")
+            if(__cache_tag__ [i][j]!="-1")
             {   
-                string hex_add=bin_to_hex(mem[i][j]);
+                string hex_add=bin_to_hex(__cache_tag__ [i][j]);
                 if(hex_add[hex_add.length()-1]=='0') hex_add.erase(hex_add.length()-1);
                 for(int i=hex_add.length()-1; i>=0; i--){
                     printf("%c",hex_add[i]);
                 }
-                if(dirty[i][j]){
+                if(__cache_dirty__[i][j]){
                     cout<<" D";
                 }else{
                     cout<<"  ";
                 }
             }
             else{
-                cout<<mem[i][j];
+                cout<<__cache_tag__ [i][j];
             }
             printf("%3.1s","|");
         }
@@ -570,12 +571,12 @@ void print_data(){
         if(victimCache_blocks){
         cout<<endl<<"=======VC Data======="<<endl;
         for(int i=0; i<victimCache_blocks; i++){
-            unsigned int addrdec=hex_to_dec(victim[i]);
+            unsigned int addrdec=hex_to_dec(__VC__[i]);
             string addrbin      =dec_to_bin(addrdec);
             string revAddr      =bin_to_hex(addrbin.substr((int)log2(blocksize),32-(int)log2(blocksize)));
             for(int j=revAddr.length()-1; j>=0; j--)
             {    cout<<revAddr[j];}
-            if(victim_dirty[i])
+            if(__VC_dirty__[i])
                 cout<<" D ";
             else
                 cout<<"  ";
@@ -585,25 +586,25 @@ void print_data(){
 }
 int print_simulation_result(){
     if(level==1){
-        printf("a. L1 read: \t\t\t\t%d\n",L1_reads);
-        printf("b. L1 read miss: \t\t\t%d\n",L1_read_miss);
-        printf("c. L1 write: \t\t\t\t%d\n",L1_writes);
-        printf("d. L1 write miss: \t\t\t%d\n",L1_write_miss);
+        printf("a. L1 read: \t\t\t\t%d\n",__cache_reads__);
+        printf("b. L1 read miss: \t\t\t%d\n",__cache_read_miss__);
+        printf("c. L1 write: \t\t\t\t%d\n",__cache_writes__);
+        printf("d. L1 write miss: \t\t\t%d\n",__cache_write_miss__);
         printf("e. Number of swap request: \t\t%d\n",(victimCache_blocks?swap_request:0));
-        printf("f. Swap Request rate: \t\t\t%.4f\n",(float)(victimCache_blocks?((float)swap_request/(L1_reads+L1_writes)):0));
+        printf("f. Swap Request rate: \t\t\t%.4f\n",(float)(victimCache_blocks?((float)swap_request/(__cache_reads__+__cache_writes__)):0));
         printf("g. Number of swaps \t\t\t%d\n",(victimCache_blocks?swaps:0));
-        printf("h. Combined L1+VC miss rate: \t\t%.4f\n",(((float)L1_read_miss+L1_write_miss-swaps)/(L1_reads+L1_writes)));
+        printf("h. Combined L1+VC miss rate: \t\t%.4f\n",(((float)__cache_read_miss__+__cache_write_miss__-swaps)/(__cache_reads__+__cache_writes__)));
         printf("i. Number of Write backs from L1/VC: \t%d\n",write_back);
-        return (L1_read_miss+L1_write_miss+write_back-swaps);
+        return (__cache_read_miss__+__cache_write_miss__+write_back-swaps);
     }
     if(level==2){
-        printf("j. L2 read: \t\t\t\t%d\n",(num_cache_level==2?L1_reads:0));
-        printf("k. L2 read miss: \t\t\t%d\n",(num_cache_level==2?L1_read_miss:0));
-        printf("l. L2 write: \t\t\t\t%d\n",(num_cache_level==2?L1_writes:0));
-        printf("m. L2 write miss: \t\t\t%d\n",(num_cache_level==2?L1_write_miss:0));
-        printf("n. L2 miss rate: \t\t\t%.4f\n",(num_cache_level==2?((float)L1_read_miss/L1_reads):0));
+        printf("j. L2 read: \t\t\t\t%d\n",(num_cache_level==2?__cache_reads__:0));
+        printf("k. L2 read miss: \t\t\t%d\n",(num_cache_level==2?__cache_read_miss__:0));
+        printf("l. L2 write: \t\t\t\t%d\n",(num_cache_level==2?__cache_writes__:0));
+        printf("m. L2 write miss: \t\t\t%d\n",(num_cache_level==2?__cache_write_miss__:0));
+        printf("n. L2 miss rate: \t\t\t%.4f\n",(num_cache_level==2?((float)__cache_read_miss__/__cache_reads__):0));
         printf("o. Number of writebacks from L2: \t%d\n",(num_cache_level==2?write_back:0));
-        return (L1_read_miss+L1_write_miss+write_back);
+        return (__cache_read_miss__+__cache_write_miss__+write_back);
     }
     return 0;
 }           
