@@ -1,5 +1,5 @@
 #include "cache.h"
-
+using namespace std;
 std::string bin_to_hex(std::string addr_bin){
     while(addr_bin.length()%4 != 0){
         addr_bin.append("0");

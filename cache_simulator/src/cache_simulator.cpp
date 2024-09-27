@@ -1,12 +1,6 @@
-// Author:  Prabhav Talukdar
-
-// Cache Simulator : Reconfigurable L1+VC+L2
-#include<iostream>
-#include<math.h>
-#include<string>
-#include<fstream>
-#include<stdlib.h>
-#include<vector>
+// Author          :  Prabhav Talukdar
+// Roll No         :  EE23M053
+// Cache Simulator :  Reconfigurable L1+VC+L2
 #include"cache.h"
 
 //-------------------------------------------Address Structure----------------------------------------------------------------------
@@ -15,19 +9,6 @@
 //                              |  Tag Bits |   Set No.    | Block Offset |
 //                              --------------------------------------------   
 //-----------------------------------------------------------------------------------------------------------------------------------
-
-//Sizes are in bytes
-#define L1_CACHE               1024      // Number of Set x Associativity x Block Offset
-#define L1_ASSOC               1         // Associativity
-#define BLOCKSIZE              16        // Size in Bytes           
-#define L1_TAG                 32-(int)log2(L1_CACHE/L1_ASSOC)
-
-#define VC_blocks              0        // Number of Blocks in Victim Cache
-
-#define L2_CACHE               8192        // Number of Set x Associativity x Block Offset
-#define L2_ASSOC               4         // Associativity           
-#define L2_TAG                 L2_CACHE?(32-(int)log2(L2_CACHE)-(int)log2(L2_ASSOC)):0
-using namespace std;
 
 //--------------------------------------------Cache Class----------------------------------------------------------------------
 
@@ -109,8 +90,8 @@ public:
         __cache_reads__            =0;
         __cache_writes__           =0;
         __cache_write_miss__       =0;
-        rd_nextlevel                    =0;
-        wb_nextlevel              =0;   
+        rd_nextlevel               =0;
+        wb_nextlevel               =0;   
         write_back                 =0;                  
         }
     }
@@ -170,7 +151,7 @@ public:
 
                             for(int j=0; j<assoc; j++){
                                 if(__cache_valid__[__cache_setno__][j]==0){
-                                    __cache_tag__ [__cache_setno__][j]                  =addr_bin.substr((int)log2(cache/assoc),tag);
+                                    __cache_tag__ [__cache_setno__][j]       =addr_bin.substr((int)log2(cache/assoc),tag);
                                     __cachefulladdr__[__cache_setno__][j]    =address;
 
                                     __cache_valid__[__cache_setno__][j]                =1;
@@ -522,8 +503,8 @@ string L2_write_addr(){
 }
 
 //--------------------Sorting Blocks wrt LRU to display them in order----------------------------
-
-void sort(string cacheline[], int D[], int lru_count[]){
+// Cache
+void sort_cache(string cacheline[], int D[], int lru_count[]){
     for(int i=0; i< assoc; i++){
         bool swapped=false;
         for(int j=0; j< assoc-1; j++){
@@ -537,19 +518,32 @@ void sort(string cacheline[], int D[], int lru_count[]){
         if(swapped==false) break;
     }
 }
+// Victim Cache
+void sort_vc(string vc[], int lru_count[]){
+    for(int i=0; i< victimCache_blocks; i++){
+        bool swapped=false;
+        for(int j=0; j< victimCache_blocks-1; j++){
+            if(lru_count[j] > lru_count[j+1]){
+                swap(lru_count[j],lru_count[j+1]);
+                vc[j+1].swap(vc[j]);
+                swapped=true;
+            }
+        }
+        if(swapped==false) break;
+    }
+}
 
 //-------------------------------------Print CACHE Data------------------------------------------
 void print_data(){
         cout<<endl<<endl;
-        cout<<"Configuration: "<<endl;
-        cout<<"Cache Size: "<<cache<<" Associativity: "<<assoc<<" BlockSize: "<<blocksize<<endl<<endl;
+        cout<<"=======L"<<level<<" content========"<<endl;
         for(int i=0;i<(cache/(assoc*blocksize));i++){
             printf("set no. %3d %4.4s",i,"  | ");
-            sort(__cache_tag__ [i],__cache_dirty__[i],__cache_LRU_count__[i]);
+            sort_cache(__cache_tag__ [i],__cache_dirty__[i],__cache_LRU_count__[i]);
         for(int j=0; j<assoc;j++){
             if(__cache_tag__ [i][j]!="-1")
-            {   
-                string hex_add=bin_to_hex(__cache_tag__ [i][j]);
+            {       
+                string hex_add=bin_to_hex(__cache_tag__[i][j]);
                 if(hex_add[hex_add.length()-1]=='0') hex_add.erase(hex_add.length()-1);
                 for(int i=hex_add.length()-1; i>=0; i--){
                     printf("%c",hex_add[i]);
@@ -569,7 +563,9 @@ void print_data(){
         }
 
         if(victimCache_blocks){
-        cout<<endl<<"=======VC Data======="<<endl;
+        cout<<endl<<"=======VC Data======="<<endl<<endl;
+        cout<<"set 0: ";
+        sort_vc(__VC__,__VC_LRU_count__);
         for(int i=0; i<victimCache_blocks; i++){
             unsigned int addrdec=hex_to_dec(__VC__[i]);
             string addrbin      =dec_to_bin(addrdec);
@@ -582,7 +578,7 @@ void print_data(){
                 cout<<"  ";
         }     
     }
-    cout<<endl;
+    cout<<endl<<endl;
 }
 int print_simulation_result(){
     if(level==1){
@@ -612,19 +608,39 @@ int print_simulation_result(){
 
 
 //--------------------------------------------------MAIN------------------------------------------------------------------
-int main(){
+int main(int argc, char *argv[]){
     cout<<"--------------Cache Simulator-----------------"<<endl;
-    cout<<"----------Author: Prabhav Talukdar------------"<<endl;
-    cout<<"----------------------------------------------"<<endl;
-    string filepath="/home/prabhav/LocalDisk/EE23M053/CS6600_COA/Project/project1_cachesim/Assignment1/Assignment_files/gcc_trace.txt";
-    ifstream file(filepath);
+    cout<<"----------Author : Prabhav Talukdar------------"<<endl;
+    cout<<"----------Roll no: EE23M053--------------------"<<endl;
+    cout<<"----------------------------------------------"<<endl<<endl;
+    cout<<"========== Simulator configuration ==========="<<endl;
+    cout<<"L1 SIZE: \t\t"<<argv[1]<<endl;
+    cout<<"L1 ASSOC: \t\t"<<argv[2]<<endl;
+    cout<<"L1 BLOCKSIZE: \t\t"<<argv[3]<<endl;
+    cout<<"VC_NUM_BLOCKS: \t\t"<<argv[4]<<endl;
+    cout<<"L2 SIZE: \t\t"<<argv[5]<<endl;
+    cout<<"L2 ASSOC: \t\t"<<argv[6]<<endl;
+    cout<<"trace file: \t\t"<<argv[7]<<endl;
+
+// Argument order: ./cache_sim <L1_SIZE> <L1_ASSOC> <L1_BLOCKSIZE> <VC_NUM_BLOCKS> <L2_SIZE> <L2_ASSOC> <trace_file>
+    string filepath="/home/prabhav/LocalDisk/EE23M053/CS6600_COA/Project/project1_cachesim/Assignment1/Assignment_files/";
+    ifstream file(filepath+argv[7]);
     string line;
     char op;
-    char address[8];    
-    unsigned int num_Cache_levels = (L2_CACHE!=0 ? 2:1);
+    char address[8];
 
-    L1 sim_l1(L1_CACHE,L1_ASSOC,BLOCKSIZE,L1_TAG,1,VC_blocks,num_Cache_levels);
-    L1 sim_l2(L2_CACHE,L2_ASSOC,BLOCKSIZE,L2_TAG,2,0,num_Cache_levels);
+    unsigned int l1_cache=atoi(argv[1]), l2_cache=atoi(argv[5]), l1_assoc=atoi(argv[2]), l2_assoc=atoi(argv[6]), vc_blocks=atoi(argv[4]) ,blocksize=atoi(argv[3]);    
+    unsigned int l1_tag, l2_tag;
+
+
+
+    unsigned int num_Cache_levels = (l2_cache!=0 ? 2:1);
+
+    l1_tag= 32-(int)log2(l1_cache/l1_assoc);
+    l2_tag= l2_cache?(32-(int)log2(l2_cache/l2_assoc)):0;
+
+    L1 sim_l1(l1_cache,l1_assoc,blocksize,l1_tag,1,vc_blocks,num_Cache_levels);
+    L1 sim_l2(l2_cache,l2_assoc,blocksize,l2_tag,2,0,num_Cache_levels);
 
     if (!file.is_open()) {
         cerr << "Error opening file." << endl;
@@ -648,11 +664,13 @@ int main(){
             }
         }
     }
+    
 
     sim_l1.print_data();
     if(num_Cache_levels==2) sim_l2.print_data();
 
     unsigned memory_traffic_l1=0, memory_traffic_l2=0;
+    cout<<"===== Simulation results (raw) ====="<<endl;
     memory_traffic_l1=sim_l1.print_simulation_result();
     memory_traffic_l2=sim_l2.print_simulation_result();
     printf("p. Total memory traffic \t\t%d\n",((num_Cache_levels==2)?memory_traffic_l2:memory_traffic_l1));

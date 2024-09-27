@@ -5,8 +5,7 @@
 #include<string>
 #include<fstream>
 #include<stdlib.h>
-#include<vector>
-
+    using namespace std;
     unsigned int bin_to_dec(std::string bin, int start, int end);
     std::string dec_to_bin(unsigned int addr_dec);
     int hex_to_dec(std::string str_addr);
