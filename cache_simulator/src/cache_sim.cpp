@@ -626,7 +626,7 @@ int main(int argc, char *argv[]){
     std::cout<<"trace file: \t\t"<<argv[7]<<std::endl;
 
 // Argument order: ./cache_sim <L1_SIZE> <L1_ASSOC> <L1_BLOCKSIZE> <VC_NUM_BLOCKS> <L2_SIZE> <L2_ASSOC> <trace_file>
-    std::string filepath="./";
+    std::string filepath="../testbench/";
     ifstream file(filepath+argv[7]);
     std::string line;
     char op;
