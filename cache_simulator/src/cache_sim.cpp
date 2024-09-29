@@ -1,8 +1,8 @@
 // Author          :  Prabhav Talukdar
 // Roll No         :  EE23M053
 // Cache Simulator :  Reconfigurable L1+VC+L2
-#include"cache.h"
-
+#include"./cache.h"
+#include"../testbench/parse.h"
 //-------------------------------------------Address Structure----------------------------------------------------------------------
 //                      Bit:                 <---log2(CacheSize/Assoc)--->         
 //                              31________________________________________0
@@ -11,11 +11,10 @@
 //-----------------------------------------------------------------------------------------------------------------------------------
 
 //--------------------------------------------Cache Class----------------------------------------------------------------------
-
 class L1{
-    string              **__cache_tag__;                         
-    string              **__cachefulladdr__;
-    string              *__VC__;
+    std::string         **__cache_tag__;                         
+    std::string         **__cachefulladdr__;
+    std::string         *__VC__;
     int                 **__cache_valid__;
     int                 **__cache_dirty__;
     int                 *__VC_dirty__;
@@ -28,9 +27,9 @@ class L1{
     unsigned int        __cache_writes__;
 
     unsigned int        cache, assoc, blocksize, tag, level, victimCache_blocks, num_cache_level;
-    string              addr_bin;
-    string              addr_hex;                        
-    string              writeback_address;
+    std::string              addr_bin;
+    std::string              addr_hex;                        
+    std::string              writeback_address;
     char                op;
     unsigned int        rd_nextlevel;           // L1 -> L2  or  L2 -> Memory
     unsigned int        wb_nextlevel;     //signals
@@ -49,8 +48,8 @@ public:
         victimCache_blocks  =V;
         num_cache_level     =num_level;
 
-        __cache_tag__                 = new string *[(cache/(assoc*blocksize))];
-        __cachefulladdr__   = new string *[(cache/(assoc*blocksize))];
+        __cache_tag__                 = new std::string *[(cache/(assoc*blocksize))];
+        __cachefulladdr__   = new std::string *[(cache/(assoc*blocksize))];
         __cache_valid__               = new int    *[(cache/(assoc*blocksize))];
         __cache_dirty__               = new int    *[(cache/(assoc*blocksize))];
         __cache_LRU_count__           = new int    *[(cache/(assoc*blocksize))];
@@ -58,7 +57,7 @@ public:
         //Assign Victim Cache if level = 1
         swaps           = 0;
         if(L==1 && V !=0){
-            __VC__          = new string [V];
+            __VC__          = new std::string [V];
             __VC_LRU_count__      = new int [V];
             __VC_dirty__    = new int [V];
             swap_request    = 0;
@@ -70,8 +69,8 @@ public:
         }
 
         for(int i=0; i<((cache/(assoc*blocksize)));i++){
-            __cache_tag__ [i]          = new string[assoc];
-            __cachefulladdr__[i]= new string[assoc];
+            __cache_tag__ [i]          = new std::string[assoc];
+            __cachefulladdr__[i]= new std::string[assoc];
             __cache_valid__[i]        = new int[assoc];
             __cache_dirty__[i]        = new int[assoc];
             __cache_LRU_count__[i]    = new int[assoc];
@@ -95,7 +94,7 @@ public:
         write_back                 =0;                  
         }
     }
-    void put_addr(char operation, string address){
+    void put_addr(char operation, std::string address){
         addr_hex            =address;
         op                  =operation;
         unsigned int add_dec=hex_to_dec(address);
@@ -121,8 +120,8 @@ public:
                 
                 
                 for(int i=0; i<assoc; i++){
-                    string mem_FA_tag  =hex_to_bin(__cachefulladdr__[__cache_setno__][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
-                    string addr_FA_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                    std::string mem_FA_tag  =hex_to_bin(__cachefulladdr__[__cache_setno__][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                    std::string addr_FA_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                     
                     //----------------------Read Hit-----------------------------------------------
                     //Comparing (tag+index) bits of Requested Address and Cache block address
@@ -182,8 +181,8 @@ public:
                             bool victim_hit = false;
                             int victim_pos  =-1;
                             for(int k=0; k<victimCache_blocks; k++){
-                                string vc_tag                    =hex_to_bin(__VC__[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
-                                string addr_fullyassociative_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                                std::string vc_tag                    =hex_to_bin(__VC__[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                                std::string addr_fullyassociative_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                                 //Comparing (tag+index) of L1 and tag of VC
                                 if(!addr_fullyassociative_tag.compare(vc_tag)){
                                     victim_hit=true;
@@ -195,7 +194,7 @@ public:
                             //--------Victim Cache Hit-----------
                             if(victim_hit){
                                 unsigned int victim_hex_dec =hex_to_dec(__VC__[victim_pos]);
-                                string victim_bin           =dec_to_bin(victim_hex_dec);
+                                std::string victim_bin           =dec_to_bin(victim_hex_dec);
                                 
                                 __cache_tag__ [__cache_setno__][lru_pos]        =victim_bin.substr((int)log2(cache/assoc),tag);
                                 __VC__[victim_pos].swap(__cachefulladdr__[__cache_setno__][lru_pos]);
@@ -302,8 +301,8 @@ public:
 
                 for(int i=0; i<assoc; i++){
 
-                    string mem_FA_tag  =hex_to_bin(__cachefulladdr__[__cache_setno__][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
-                    string addr_FA_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                    std::string mem_FA_tag  =hex_to_bin(__cachefulladdr__[__cache_setno__][i]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                    std::string addr_FA_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                     //----------------------Write Hit-----------------------------------------------
                     //Comparing (tag+index) bits of Requested Address and Cache block address
                     if( !addr_FA_tag.compare(mem_FA_tag) ){
@@ -361,8 +360,8 @@ public:
                         int victim_pos  =-1;
                         
                         for(int k=0; k<victimCache_blocks; k++){
-                                string vc_tag                    =hex_to_bin(__VC__[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
-                                string addr_fullyassociative_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                                std::string vc_tag                    =hex_to_bin(__VC__[k]).substr((int)log2(blocksize),32-(int)log2(blocksize));
+                                std::string addr_fullyassociative_tag =hex_to_bin(address).substr((int)log2(blocksize),32-(int)log2(blocksize));
                                 //Comparing (tag+index) of L1 and tag of VC
                                 if(!addr_fullyassociative_tag.compare(vc_tag)){
                                 victim_hit=true;
@@ -374,7 +373,7 @@ public:
                         //--------Victim Cache Hit-----------
                         if(victim_hit){
                             unsigned int victim_hex_dec =hex_to_dec(__VC__[victim_pos]);
-                            string victim_bin           =dec_to_bin(victim_hex_dec);
+                            std::string victim_bin           =dec_to_bin(victim_hex_dec);
                             
                             __cache_tag__ [__cache_setno__][lru_pos]        =victim_bin.substr((int)log2(cache/assoc),tag);
                             __VC__[victim_pos].swap(__cachefulladdr__[__cache_setno__][lru_pos]);
@@ -402,7 +401,7 @@ public:
                             if(invalid_victim_block){
                                 __VC__[victimpos]                =__cachefulladdr__[__cache_setno__][lru_pos];
                                 __VC_dirty__[victimpos]          = __cache_dirty__[__cache_setno__][lru_pos];
-                                
+
                                 //Bring in new data to cache
                                 __cache_tag__ [__cache_setno__][lru_pos]              = addr_bin.substr((int)log2(cache/assoc),tag);
                                 __cachefulladdr__[__cache_setno__][lru_pos]= address; 
@@ -498,13 +497,21 @@ int getSignal(){
     return 0;
 }
 
-string L2_write_addr(){
+std::string L2_write_addr(){
     return writeback_address;
 }
+//----------------------------Get Cache info functions-------------------------------------------
 
+float get_cache_hitratio(){  return (cache?(1.0-((float)__cache_read_miss__+__cache_write_miss__)/(__cache_reads__+__cache_writes__)):0);   }
+float get_VC_hitratio(){ return (!swaps?0:((float)swaps/swap_request)); }
+int get_misses(){ return (__cache_read_miss__+__cache_write_miss__); }
+int get_writeback(){ return (write_back); }
+int get_totalaccess(){ return (__cache_reads__+__cache_writes__); }
+int get_swaprequest(){ return swap_request; }
+int get_swaps(){ return swaps;}
 //--------------------Sorting Blocks wrt LRU to display them in order----------------------------
 // Cache
-void sort_cache(string cacheline[], int D[], int lru_count[]){
+void sort_cache(std::string cacheline[], int D[], int lru_count[]){
     for(int i=0; i< assoc; i++){
         bool swapped=false;
         for(int j=0; j< assoc-1; j++){
@@ -519,7 +526,7 @@ void sort_cache(string cacheline[], int D[], int lru_count[]){
     }
 }
 // Victim Cache
-void sort_vc(string vc[], int lru_count[]){
+void sort_vc(std::string vc[], int lru_count[]){
     for(int i=0; i< victimCache_blocks; i++){
         bool swapped=false;
         for(int j=0; j< victimCache_blocks-1; j++){
@@ -535,50 +542,50 @@ void sort_vc(string vc[], int lru_count[]){
 
 //-------------------------------------Print CACHE Data------------------------------------------
 void print_data(){
-        cout<<endl<<endl;
-        cout<<"=======L"<<level<<" content========"<<endl;
+        std::cout<<std::endl<<std::endl;
+        std::cout<<"=====L"<<level<<" content====="<<std::endl;
         for(int i=0;i<(cache/(assoc*blocksize));i++){
             printf("set no. %3d %4.4s",i,"  | ");
             sort_cache(__cache_tag__ [i],__cache_dirty__[i],__cache_LRU_count__[i]);
         for(int j=0; j<assoc;j++){
             if(__cache_tag__ [i][j]!="-1")
             {       
-                string hex_add=bin_to_hex(__cache_tag__[i][j]);
+                std::string hex_add=bin_to_hex(__cache_tag__[i][j]);
                 if(hex_add[hex_add.length()-1]=='0') hex_add.erase(hex_add.length()-1);
                 for(int i=hex_add.length()-1; i>=0; i--){
                     printf("%c",hex_add[i]);
                 }
                 if(__cache_dirty__[i][j]){
-                    cout<<" D";
+                    std::cout<<" D";
                 }else{
-                    cout<<"  ";
+                    std::cout<<"  ";
                 }
             }
             else{
-                cout<<__cache_tag__ [i][j];
+                std::cout<<__cache_tag__ [i][j];
             }
             printf("%3.1s","|");
         }
-        cout<<endl;
+        std::cout<<std::endl;
         }
 
         if(victimCache_blocks){
-        cout<<endl<<"=======VC Data======="<<endl<<endl;
-        cout<<"set 0: ";
+        std::cout<<std::endl<<"=======VC Data======="<<std::endl;
+        std::cout<<"set 0: ";
         sort_vc(__VC__,__VC_LRU_count__);
         for(int i=0; i<victimCache_blocks; i++){
             unsigned int addrdec=hex_to_dec(__VC__[i]);
-            string addrbin      =dec_to_bin(addrdec);
-            string revAddr      =bin_to_hex(addrbin.substr((int)log2(blocksize),32-(int)log2(blocksize)));
+            std::string addrbin      =dec_to_bin(addrdec);
+            std::string revAddr      =bin_to_hex(addrbin.substr((int)log2(blocksize),32-(int)log2(blocksize)));
             for(int j=revAddr.length()-1; j>=0; j--)
-            {    cout<<revAddr[j];}
+            {    std::cout<<revAddr[j];}
             if(__VC_dirty__[i])
-                cout<<" D ";
+                std::cout<<" D ";
             else
-                cout<<"  ";
+                std::cout<<"  ";
         }     
     }
-    cout<<endl<<endl;
+    std::cout<<std::endl<<std::endl;
 }
 int print_simulation_result(){
     if(level==1){
@@ -609,23 +616,19 @@ int print_simulation_result(){
 
 //--------------------------------------------------MAIN------------------------------------------------------------------
 int main(int argc, char *argv[]){
-    cout<<"--------------Cache Simulator-----------------"<<endl;
-    cout<<"----------Author : Prabhav Talukdar------------"<<endl;
-    cout<<"----------Roll no: EE23M053--------------------"<<endl;
-    cout<<"----------------------------------------------"<<endl<<endl;
-    cout<<"========== Simulator configuration ==========="<<endl;
-    cout<<"L1 SIZE: \t\t"<<argv[1]<<endl;
-    cout<<"L1 ASSOC: \t\t"<<argv[2]<<endl;
-    cout<<"L1 BLOCKSIZE: \t\t"<<argv[3]<<endl;
-    cout<<"VC_NUM_BLOCKS: \t\t"<<argv[4]<<endl;
-    cout<<"L2 SIZE: \t\t"<<argv[5]<<endl;
-    cout<<"L2 ASSOC: \t\t"<<argv[6]<<endl;
-    cout<<"trace file: \t\t"<<argv[7]<<endl;
+    std::cout<<"===== Simulator configuration ====="<<std::endl;
+    std::cout<<"L1 SIZE: \t\t"<<argv[1]<<std::endl;
+    std::cout<<"L1 ASSOC: \t\t"<<argv[2]<<std::endl;
+    std::cout<<"L1 BLOCKSIZE: \t\t"<<argv[3]<<std::endl;
+    std::cout<<"VC_NUM_BLOCKS: \t\t"<<argv[4]<<std::endl;
+    std::cout<<"L2 SIZE: \t\t"<<argv[5]<<std::endl;
+    std::cout<<"L2 ASSOC: \t\t"<<argv[6]<<std::endl;
+    std::cout<<"trace file: \t\t"<<argv[7]<<std::endl;
 
 // Argument order: ./cache_sim <L1_SIZE> <L1_ASSOC> <L1_BLOCKSIZE> <VC_NUM_BLOCKS> <L2_SIZE> <L2_ASSOC> <trace_file>
-    string filepath="/home/prabhav/LocalDisk/EE23M053/CS6600_COA/Project/project1_cachesim/Assignment1/Assignment_files/";
+    std::string filepath="./";
     ifstream file(filepath+argv[7]);
-    string line;
+    std::string line;
     char op;
     char address[8];
 
@@ -643,14 +646,14 @@ int main(int argc, char *argv[]){
     L1 sim_l2(l2_cache,l2_assoc,blocksize,l2_tag,2,0,num_Cache_levels);
 
     if (!file.is_open()) {
-        cerr << "Error opening file." << endl;
+        cerr << "Error opening file." << std::endl;
         return -1;
     }
     
     int count=0;
     while (getline(file, line)) {
         sscanf(line.c_str(), "%c %s", &op, address);
-        string add=address;             // Converting character array to String 
+        std::string add=address;             // Converting character array to String 
 
         sim_l1.put_addr(op,add);
         if(sim_l1.getSignal()==1)                           //Read
@@ -670,11 +673,99 @@ int main(int argc, char *argv[]){
     if(num_Cache_levels==2) sim_l2.print_data();
 
     unsigned memory_traffic_l1=0, memory_traffic_l2=0;
-    cout<<"===== Simulation results (raw) ====="<<endl;
+    std::cout<<"===== Simulation results (raw) ====="<<std::endl;
     memory_traffic_l1=sim_l1.print_simulation_result();
     memory_traffic_l2=sim_l2.print_simulation_result();
     printf("p. Total memory traffic \t\t%d\n",((num_Cache_levels==2)?memory_traffic_l2:memory_traffic_l1));
     
+    //Instatiating CACTII
+    std::cout<<std::endl<<"===== Simulation results (performance) ====="<<std::endl;
+    float AccessTimeL1; float EnergyL1; float AreaL1;
+    float AccessTimeL2; float EnergyL2; float AreaL2;
+    float AccessTimeVC; float EnergyVC; float AreaVC;
+    int cacti_l1=get_cacti_results(l1_cache, blocksize, l1_assoc, &AccessTimeL1, &EnergyL1, &AreaL1);
+    int cacti_l2=get_cacti_results(l2_cache, blocksize, l2_assoc, &AccessTimeL2, &EnergyL2, &AreaL2);
+    int cacti_vc=get_cacti_results(vc_blocks*blocksize, blocksize, vc_blocks, &AccessTimeVC, &EnergyVC, &AreaVC);
+    if(l2_cache==0){
+        //Configuration: L1+VC
+        if( l1_cache && vc_blocks){
+            if( !cacti_l1 && !cacti_vc ){
+                float L1_HR=sim_l1.get_cache_hitratio();
+                float totalaccess=sim_l1.get_totalaccess();             // reads+writes
+                float totalmisses=sim_l1.get_misses();                  // read_miss + write_miss
+                float VC_HR=sim_l1.get_VC_hitratio();
+                float VC_AT=(AccessTimeVC>(1e-10)?AccessTimeVC:0.2);
+                float AT= L1_HR*AccessTimeL1 + (1.0-L1_HR)*( VC_HR*VC_AT + (1.0-VC_HR)*(20.0 + (float)blocksize/16) );
+                float TotalEnergy= (totalaccess+totalmisses)*EnergyL1 + 2*sim_l1.get_swaprequest()*EnergyVC + (totalmisses-sim_l1.get_swaps() + sim_l1.get_writeback())*0.05;
+                std::cout<<"1. average access time: \t\t"<<AT<<std::endl;
+                std::cout<<"2. energy-delay product: \t\t"<<TotalEnergy*AT<<std::endl;
+                std::cout<<"3. total area: \t\t\t\t"<<AreaL1+AreaVC<<std::endl;
+            }else{
+                std::cout<<"CACTII Error"<<std::endl;
+            }
+        }//Configuration: L1
+        else if (l1_cache){
+            if(cacti_l1>0){
+                std::cout<<"CACTII Error"<<std::endl;
+            }
+            else{
+                float L1_HR=sim_l1.get_cache_hitratio();
+                float AT= L1_HR*AccessTimeL1 + (1.0-L1_HR)*( 20.0 + (float)blocksize/16 );
+                float totalaccess=sim_l1.get_totalaccess();             // reads+writes
+                float totalmisses=sim_l1.get_misses();                  // read_miss + write_miss
+                float totalEnergy= (totalaccess+totalmisses)*EnergyL1 + (totalmisses+sim_l1.get_writeback())*0.05; 
+                std::cout<<"1. average access time: \t\t"<<AT<<std::endl;
+                std::cout<<"2. energy-delay product: \t\t"<<totalEnergy*AT<<std::endl;
+                std::cout<<"3. total area: \t\t\t\t"<<AreaL1<<std::endl;
+            }
+        } 
+    }else{  //Configuration: L1+VC+L2
+            if( l1_cache && vc_blocks){
+            if( !cacti_l1 && !cacti_vc && !cacti_l2 ){
+                float L1_HR=sim_l1.get_cache_hitratio();
+                float L2_HR=sim_l2.get_cache_hitratio();
+                float totalaccess_l1=sim_l1.get_totalaccess();             // reads+writes
+                float totalmisses_l1=sim_l1.get_misses();                  // read_miss + write_miss
+                float totalaccess_l2=sim_l2.get_totalaccess();             // reads+writes
+                float totalmisses_l2=sim_l2.get_misses();                  // read_miss + write_miss
+                float VC_HR=sim_l1.get_VC_hitratio();
+                float VC_AT=(AccessTimeVC>(1e-10)?AccessTimeVC:0.2);
+                float AT= L1_HR*AccessTimeL1 + (1.0000000-L1_HR)*( AccessTimeL1 + VC_HR*VC_AT 
+                                        +(1.0000000-VC_HR)*(L2_HR*AccessTimeL2 + AccessTimeL1 
+                                        +(1.0000000-L2_HR)*(AccessTimeL1 + AccessTimeL2 + AccessTimeVC + 20.0 + (float)blocksize/16)) );
+                float TotalEnergy= (totalaccess_l1+totalmisses_l1)*EnergyL1 + 2*sim_l1.get_swaprequest()*EnergyVC 
+                                    +(totalaccess_l2+totalmisses_l2)*EnergyL2
+                                    + (totalmisses_l2 + sim_l2.get_writeback())*0.05;
+                std::cout<<"1. average access time: \t\t"<<AT<<std::endl;
+                std::cout<<"2. energy-delay product: \t\t"<<TotalEnergy*AT<<std::endl;
+                std::cout<<"3. total area: \t\t\t\t"<<AreaL1+AreaVC+AreaL2<<std::endl;
+            }else{
+                std::cout<<"CACTII Error"<<std::endl;
+            }
+        }//Configuration: L1+L2
+        else{   
+                if( !cacti_l1 && !cacti_l2 ){
+                float L1_HR=sim_l1.get_cache_hitratio();
+                float L2_HR=sim_l2.get_cache_hitratio();
+                float totalaccess_l1=sim_l1.get_totalaccess();             // reads+writes
+                float totalmisses_l1=sim_l1.get_misses();                  // read_miss + write_miss
+                float totalaccess_l2=sim_l2.get_totalaccess();             // reads+writes
+                float totalmisses_l2=sim_l2.get_misses();                  // read_miss + write_miss
+                std::cout<<AccessTimeL1<<" "<<" "<<AccessTimeL2<<" "<<" "<<std::endl;
+                float AT= L1_HR*AccessTimeL1 + (1.0000000-L1_HR)*(AccessTimeL1+L2_HR*(AccessTimeL2)
+                                        +(1.0000000-L2_HR)*(AccessTimeL2+AccessTimeL1 + 20.0 + (float)blocksize/16));
+                float TotalEnergy= (totalaccess_l1+totalmisses_l1)*EnergyL1
+                                    +(totalaccess_l2+totalmisses_l2)*EnergyL2
+                                    + (totalmisses_l2 + sim_l2.get_writeback())*0.05;
+                std::cout<<"1. average access time: \t\t"<<AT<<std::endl;
+                std::cout<<"2. energy-delay product: \t\t"<<TotalEnergy*AT<<std::endl;
+                std::cout<<"3. total area: \t\t\t\t"<<AreaL1+AreaL2<<std::endl;
+            }else{
+                std::cout<<"CACTII Error"<<std::endl;
+            }
+        }
+
+    }
     file.close();
     return 0;
 }
