@@ -1,0 +1,197 @@
+===== Simulator configuration =====
+L1_SIZE: 		1024
+L1_ASSOC: 		2
+L1_BLOCKSIZE: 		16
+VC_NUM_BLOCKS: 		0
+L2_SIZE: 		8192
+L2_ASSOC: 		4
+trace_file: 		gcc_trace.txt
+
+===== L1 contents =====
+  set   0 :   20028D D   20018A     
+  set   1 :   20028D D   20028E D   
+  set   2 :   2001C1 D   200153 D   
+  set   3 :   20028D D   20013B     
+  set   4 :   200223 D   20028D     
+  set   5 :   2001C1     200149     
+  set   6 :   20028D D   20028E D   
+  set   7 :   20018A     2001AC D   
+  set   8 :   20018F D   20018A     
+  set   9 :   20018F D   2000F9     
+  set  10 :   20017A     2000FA     
+  set  11 :   200009     20018A     
+  set  12 :   200009     20028D D   
+  set  13 :   200009     2000F9     
+  set  14 :   200009     2001AC     
+  set  15 :   200009     2001B2 D   
+  set  16 :   200009     3D819C D   
+  set  17 :   200009     20017B D   
+  set  18 :   200009     2000FA     
+  set  19 :   200009     2001B2 D   
+  set  20 :   200009     2000FA     
+  set  21 :   200009     200214     
+  set  22 :   200009     20023F     
+  set  23 :   2001AB     20013A     
+  set  24 :   20018F D   2001F2     
+  set  25 :   2001AA     2001AB     
+  set  26 :   20028D D   20018D D   
+  set  27 :   20028D D   20018D D   
+  set  28 :   20013A     20028D D   
+  set  29 :   20013A     20018D D   
+  set  30 :   20028C D   20018D D   
+  set  31 :   2001F8 D   20028C D   
+
+
+
+===== L2 contents =====
+  set   0 :   80066 D   800A3 D   800AC D   800AB D   
+  set   1 :   80066 D   8007D D   800A3 D   800AC D   
+  set   2 :   80066 D   8007E D   8006D D   800A3 D   
+  set   3 :   80066 D   800A3 D   800AA D   800A7 D   
+  set   4 :   80066 D   800A3 D   800AA D   800AC D   
+  set   5 :   80066 D   800A3 D   800AA D   800AC D   
+  set   6 :   800A3 D   800AC D   800AB D   800A6 D   
+  set   7 :   8006B     8006C D   800A3 D   800AC D   
+  set   8 :   800A3 D   8006B D   800AC D   800AB D   
+  set   9 :   800A3 D   8003E     800AC D   800AB D   
+  set  10 :   800A3 D   800AC D   800AB D   800AA D   
+  set  11 :   800A3 D   800AC D   800AB D   800AA D   
+  set  12 :   8006B D   800A3 D   800AC D   800AB D   
+  set  13 :   800A3 D   80079 D   8006F D   800AC D   
+  set  14 :   8006B     800A3 D   800AC D   800AB D   
+  set  15 :   800A3 D   800AC D   800AB D   800AA D   
+  set  16 :   800A3 D   F6067     800AC D   800AB D   
+  set  17 :   800A3 D   8007F D   800AC D   800AB D   
+  set  18 :   800A3 D   800AC D   800AB D   800AA D   
+  set  19 :   F6067 D   800A3 D   800AC D   800A8 D   
+  set  20 :   8007F D   80085 D   800A3 D   800AC D   
+  set  21 :   80085 D   800A3 D   800AC D   800A8 D   
+  set  22 :   80085 D   800A3 D   800AC D   800AB D   
+  set  23 :   800A3 D   F6067 D   800AC D   800A7 D   
+  set  24 :   800A3 D   8003E     800AC D   800A7 D   
+  set  25 :   800A3 D   8007D D   800AC D   800AB D   
+  set  26 :   800A3 D   800AC D   800AB D   800AA D   
+  set  27 :   800A3 D   800AC D   800AB D   800AA D   
+  set  28 :   800A3 D   800AC D   8007F D   800AB D   
+  set  29 :   800A3 D   8006A D   80074 D   800AC D   
+  set  30 :   800A3     800AC D   800AB D   8007F D   
+  set  31 :   8007E D   800A3 D   800AC D   800AB D   
+  set  32 :   800A3 D   80074 D   F6067 D   800AC D   
+  set  33 :   80074 D   800A3     800AC D   800AB D   
+  set  34 :   80070     800A3 D   80074 D   800AC D   
+  set  35 :   800A3 D   800AC D   800A9 D   800A8 D   
+  set  36 :   800A3 D   80090     80070 D   800AC D   
+  set  37 :   80070 D   80052     800A3 D   8007F D   
+  set  38 :   80070 D   800A3     8006F D   8007F D   
+  set  39 :   800A3 D   80070 D   800AC D   800A9 D   
+  set  40 :   800A3 D   80052     8005A D   800A9 D   
+  set  41 :   8003E     800A3 D   800AC D   8006B D   
+  set  42 :   800A3 D   8006B D   800AB D   800AA D   
+  set  43 :   80002     800A3 D   800AB D   80070 D   
+  set  44 :   80002     800A3     8006B D   800AB D   
+  set  45 :   80002     8003E     800A3 D   800AB D   
+  set  46 :   80002     800A3 D   80052     800AB D   
+  set  47 :   80002     800A3 D   8003E     800AB D   
+  set  48 :   80002     8003E     800A3 D   800AB D   
+  set  49 :   80002     800A3 D   80052     8005E D   
+  set  50 :   80002     800A3 D   8003E     800AB D   
+  set  51 :   80002     800A3 D   8007F D   800A6 D   
+  set  52 :   80002     800A3 D   800A9 D   800A8 D   
+  set  53 :   80002     800A3 D   800A9 D   800A8 D   
+  set  54 :   80002     800A3 D   800AB D   800A2 D   
+  set  55 :   800A3 D   80063 D   800AB D   800A2 D   
+  set  56 :   800A3 D   80063 D   80062 D   8006B D   
+  set  57 :   800A3 D   80063 D   80062     800AB D   
+  set  58 :   800A3     80063     80074 D   8006F D   
+  set  59 :   800A3     80063     80074 D   8007D D   
+  set  60 :   80063 D   800A3     8006B D   8007F D   
+  set  61 :   800A3 D   80063 D   8007D D   8006B D   
+  set  62 :   80063     800A3 D   800AB D   800A2 D   
+  set  63 :   80063 D   800A3 D   8006A D   80074 D   
+  set  64 :   80062     800A3 D   8005E D   800AB D   
+  set  65 :   800A3     800AB D   800A2 D   800AA D   
+  set  66 :   800A3 D   800AB D   800A2 D   800AA D   
+  set  67 :   800A3 D   800A8 D   800AB D   800A7 D   
+  set  68 :   80062     800A3 D   800A8 D   800AB D   
+  set  69 :   80062     800A3 D   800A8 D   800AB D   
+  set  70 :   800A3     800AB D   800A2 D   800AA D   
+  set  71 :   80062     800A3 D   8005E D   800A8 D   
+  set  72 :   80062     800A3 D   800A8 D   800AB D   
+  set  73 :   8005E D   800A3 D   800AB D   800A2 D   
+  set  74 :   8005E     800A3 D   8003E     80062     
+  set  75 :   80062     8006C D   800AB D   800A2 D   
+  set  76 :   8006C D   800AB D   800A2 D   800AA D   
+  set  77 :   80062     8006C D   800AB D   800A2 D   
+  set  78 :   8003E     8006C D   8007D D   8005E     
+  set  79 :   8006C     800AB D   800A2 D   8003E     
+  set  80 :   8006C D   800AB D   800A2 D   800AA D   
+  set  81 :   8003E     8006C D   8006A     800AB D   
+  set  82 :   8003E     8006C D   8006A     800AB D   
+  set  83 :   8006C     8006A     800A6 D   800A9 D   
+  set  84 :   8003E     8006A     8006C D   800A9 D   
+  set  85 :   8006A     8006B     800A9 D   800A8 D   
+  set  86 :   8006A     800AB D   800A2 D   800AA D   
+  set  87 :   8006A     8004E     800A9 D   800A8 D   
+  set  88 :   80062 D   8007C     8004E     8006A     
+  set  89 :   8006A     800AB D   800A2 D   8007C     
+  set  90 :   8006C D   800A2 D   800AB D   800AA D   
+  set  91 :   8004E     8007F D   80088 D   800A2 D   
+  set  92 :   8004E     800A2 D   800AB D   800AA D   
+  set  93 :   8004E     8006C D   800A2 D   800AB D   
+  set  94 :   80088 D   800A2 D   800AB D   800AA D   
+  set  95 :   8004E     80088 D   800A2 D   800AB D   
+  set  96 :   80073     800A2 D   800AB D   800AA D   
+  set  97 :   8006A     80088 D   800A2 D   800AB D   
+  set  98 :   80054 D   8004E     8003E     800A2 D   
+  set  99 :   8004E     800A2 D   800A8 D   800AB D   
+  set 100 :   80088 D   8007D D   800A2 D   800A8 D   
+  set 101 :   8004E     800A2 D   800A8 D   800AB D   
+  set 102 :   800A2 D   800AB D   800AA D   800A9 D   
+  set 103 :   800A2 D   800AB D   800AA D   800A5 D   
+  set 104 :   80063 D   8008F     8007C D   800A2 D   
+  set 105 :   80063 D   8008F     800A9 D   800A2 D   
+  set 106 :   8008F     80063 D   800A2 D   800AB D   
+  set 107 :   8008F     80063 D   800A2 D   800AB D   
+  set 108 :   8008F     80088 D   800A2 D   800AB D   
+  set 109 :   8008F     800A2 D   800AB D   80073 D   
+  set 110 :   8008F     800A2 D   800AB D   800AA D   
+  set 111 :   8008F     8006E D   8005E D   8006B D   
+  set 112 :   8008F     8005E D   8006E D   800A2 D   
+  set 113 :   8005E     8008F     8007D D   800A2 D   
+  set 114 :   8008F     800A2 D   800AB D   800AA D   
+  set 115 :   8008F     8005E D   800A6 D   800A2 D   
+  set 116 :   8008F     80063 D   800A2 D   8003D     
+  set 117 :   8008F     8006A D   80063 D   800A2 D   
+  set 118 :   8008F     800A2 D   800AB D   800AA D   
+  set 119 :   8006A     8008F     800A2 D   800AB D   
+  set 120 :   80063     8008F     8006B D   800A2 D   
+  set 121 :   8006A     800A2 D   800AB D   8006B D   
+  set 122 :   8006C D   8006A D   8006B D   800A2 D   
+  set 123 :   8006C D   800A2 D   800AB D   8003D     
+  set 124 :   80069 D   800A2 D   8006C D   8003D     
+  set 125 :   800A2 D   800AB D   80039     800AA D   
+  set 126 :   80065 D   80069 D   800A2 D   800AB D   
+  set 127 :   80065 D   800A2 D   800AB D   800AA D   
+
+
+===== Simulation results (raw) =====
+  a. number of L1 reads: 		63640
+  b. number of L1 read misses: 		8322
+  c. number of L1 writes: 		36360
+  d. number of L1 write misses: 	7680
+  e. number of swap requests: 		0
+  f. swap Request rate: 		0.0000
+  g. number of swaps: 			0
+  h. combined L1+VC miss rate: 		0.1600
+  i. number writebacks from L1/VC: 	8696
+  j. number of L2 reads: 		16002
+  k. number of L2 read misses: 		5943
+  l. number of L2 writes: 		8696
+  m. number of L2 write misses: 	9
+  n. L2 miss rate: 			0.3714
+  o. number of writebacks from L2: 	4041
+  p. total memory traffic: 		9993
+===== Simulation results (performance) =====
+  1. average access time: 		1.02838
+  2. energy-delay product: 		92625504.00
+  3. total area: 			0.0725908
