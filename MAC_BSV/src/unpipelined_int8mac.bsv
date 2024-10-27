@@ -1,6 +1,6 @@
-package int8_mac;
+package unpipelined_int8mac;
 
-//----------------------------------------------Signed 8-bit Pipelined Multiplier---------------------------------------------------------------------------------------------------
+//----------------------------------------------Signed 8-bit UnPipelined Multiplier---------------------------------------------------------------------------------------------------
   interface Ifc_Mult8;
        method Action put(Bit#(8) a, Bit#(8) b, Bit#(32) c);
        method Bit#(32) get;
@@ -11,37 +11,31 @@ package int8_mac;
     Ifc_cla         obj_cla         <- mk_CLA;                     //Sub-modules Instantiation
     Ifc_ha          obj_ha          <- mk_HA;
     Ifc_fa          obj_fa          <- mk_FA;
-    Reg#(Bit#(32)) s1_c <-mkReg(?);
-    Reg#(Bit#(32)) s2_c <-mkReg(?);
-    Reg#(Bit#(32)) s3_c <-mkReg(?);
-    Reg#(Bit#(32)) s4_c <-mkReg(?);
-    Reg#(Bit#(32)) s5_c <-mkReg(?);
 
     Reg#(Bit#(8))   rg_a            <- mkReg(?);
     Reg#(Bit#(8))   rg_b            <- mkReg(?);
-    Reg#(Bit#(16))  rg_pp[8];
-    Reg#(Bit#(16))  rg_stage1_op[5];
+    Bit#(16)        rg_pp[8];
+    Bit#(16)        rg_stage1_op[5];
     for (Integer i=0; i<5; i=i+1)
-      rg_stage1_op[i] <- mkReg(0);
-    Reg#(Bit#(16)) rg_stage2_op[3];
+      rg_stage1_op[i] =0;
+    Bit#(16) rg_stage2_op[3];
     for (Integer i=0; i<3; i=i+1)
-      rg_stage2_op[i] <- mkReg(0);
-    Reg#(Bit#(16)) rg_stage3_op[2];
+      rg_stage2_op[i] =0;
+    Bit#(16) rg_stage3_op[2];
     for (Integer i=0; i<2; i=i+1)
-      rg_stage3_op[i] <- mkReg(0);
-    Reg#(Bit#(16)) rg_stage4_op <- mkReg(?);
-    Reg#(Bit#(32)) rg_stage5_op <- mkReg(?);
+      rg_stage3_op[i] =0;
+    Bit#(16) rg_stage4_op =0;
+    Bit#(32) rg_stage5_op =0;
 
     //-----------Test-------------
-    Reg#(Bit#(8)) s1_a<-mkReg(?); Reg#(Bit#(8)) s1_b<-mkReg(?);
-    Reg#(Bit#(8)) s2_a<-mkReg(?); Reg#(Bit#(8)) s2_b<-mkReg(?);
-    Reg#(Bit#(8)) s3_a<-mkReg(?); Reg#(Bit#(8)) s3_b<-mkReg(?);
-    Reg#(Bit#(8)) s4_a<-mkReg(?); Reg#(Bit#(8)) s4_b<-mkReg(?);
-    Reg#(Bit#(8)) s5_a<-mkReg(?); Reg#(Bit#(8)) s5_b<-mkReg(?);
+      Reg#(Bit#(32)) s1_c <-mkReg(?); Bit#(8) s1_a =0; Bit#(8) s1_b =0;
+      Bit#(32) s2_c =0; Bit#(8) s2_a =0; Bit#(8) s2_b =0;
+      Bit#(32) s3_c =0; Bit#(8) s3_a =0; Bit#(8) s3_b =0;
+      Bit#(32) s4_c =0; Bit#(8) s4_a =0; Bit#(8) s4_b =0;
+      Bit#(32) s5_c =0; Bit#(8) s5_a =0; Bit#(8) s5_b =0;
     //---------------------------
 
    //--------------------------------Stage1: Partial Product Generation-----------------------------------------------------------------------------------
-   rule s1;
    Bit#(16) pp[8];
    pp[0] = {8'd0, ~(rg_a[7]&rg_b[0]) ,  rg_a[6:0]& signExtend(rg_b[0])};                        
    pp[1] = {7'd0, ~(rg_a[7]&rg_b[1]) ,  rg_a[6:0]& signExtend(rg_b[1])  ,1'b0};             
@@ -53,7 +47,6 @@ package int8_mac;
    pp[7] = {1'd0,  (rg_a[7]&rg_b[7]) ,  ~(rg_a[6:0]&signExtend(rg_b[7])),7'd0}; 
    
    //----------------------------------Reduction using CLA----------------------------------------------------------------------------------------------------------
-
     Bit#(16) stage1_op[5];
     stage1_op[0][5:2]   = obj_cla.get(pp[0][5:2], pp[1][5:2], pp[2][2])[4:1];
     stage1_op[0][6]     = obj_cla.get(pp[0][5:2], pp[1][5:2], pp[2][2])[0];
@@ -79,15 +72,13 @@ package int8_mac;
     stage1_op[3][5:0]   = {pp[5][5],5'b0};
     stage1_op[4][15:0]  = {7'b0,1'b1,pp[1][7],7'b0};    // 1'b1 for signed multiplication
     for (Integer i=0; i<5; i=i+1)
-      rg_stage1_op[i] <= stage1_op[i];
+      rg_stage1_op[i] = stage1_op[i];
     
-    s2_a   <= rg_a;
-    s2_b   <= rg_b;
-    s2_c   <= s1_c;
-    endrule
+    s2_a   = rg_a;
+    s2_b   = rg_b;
+    s2_c   = s1_c;
 
     //------------------------------------------Stage 2: Reduction using CLA------------------------------------------------------------------------------------------------
-    rule s2;
     Bit#(16) stage2_op[3];
     stage2_op[0][6:3]   =   obj_cla.get(rg_stage1_op[0][6:3],rg_stage1_op[1][6:3],rg_stage1_op[2][3])[4:1];
     stage2_op[0][7]     =   obj_cla.get(rg_stage1_op[0][6:3],rg_stage1_op[1][6:3],rg_stage1_op[2][3])[0];
@@ -102,15 +93,13 @@ package int8_mac;
     stage2_op[2][6:0]   =   7'd0;
     stage2_op[2][15:12] =   {1'b0,2'b0,rg_stage1_op[2][12]};
     for (Integer i=0; i<3; i=i+1)
-       rg_stage2_op[i] <= stage2_op[i];
+       rg_stage2_op[i] = stage2_op[i];
 
-    s3_a <= s2_a;
-    s3_b <= s2_b;
-    s3_c <= s2_c;   
-    endrule
+    s3_a = s2_a;
+    s3_b = s2_b;
+    s3_c = s2_c;   
     
     //-------------------------------------------Stage 3: Reduction using HA and FA------------------------------------------------------------------------------------------
-    rule s3;
     Bit#(16) stage3_op[2];
     stage3_op[0][7]     =   obj_ha.get1(rg_stage2_op[0][7], rg_stage2_op[1][7])[1];
     stage3_op[1][8]     =   obj_ha.get1(rg_stage2_op[0][7], rg_stage2_op[1][7])[0];
@@ -129,15 +118,14 @@ package int8_mac;
     stage3_op[1][15:14] =   {1'b1,rg_stage2_op[1][14]};   // 1'b1 for signed Mul
     stage3_op[1][7:0]   =   {rg_stage2_op[2][7], rg_stage2_op[1][6:5], 3'b0, rg_stage2_op[1][1], 1'b0};
     for (Integer i=0; i<2; i=i+1)
-        rg_stage3_op[i] <= stage3_op[i];
+        rg_stage3_op[i] = stage3_op[i];
     
-    s4_a <= s3_a;
-    s4_b <= s3_b;
-    s4_c <= s3_c;
-    endrule
+    s4_a = s3_a;
+    s4_b = s3_b;
+    s4_c = s3_c;
 
     //-------------------------------------------Stage 4: Vector Merge Stage------------------------------------------------------------------------------------------
-    rule s4;
+
     Bit#(16) stage4_op;
     Bit#(4) t = 4'd0;
     stage4_op[3:0]      =   obj_cla.get(rg_stage3_op[0][3:0],rg_stage3_op[1][3:0], 1'b0)[4:1];
@@ -147,36 +135,33 @@ package int8_mac;
     stage4_op[11:8]     =   obj_cla.get(rg_stage3_op[0][11:8],rg_stage3_op[1][11:8], t[1])[4:1];
     t[2]                =   obj_cla.get(rg_stage3_op[0][11:8],rg_stage3_op[1][11:8], t[1])[0];
     stage4_op[15:12]    =   obj_cla.get({1'b1,rg_stage3_op[0][14:12]},{1'b0,rg_stage3_op[1][14:12]}, t[2])[4:1];
-    rg_stage4_op <= stage4_op;
-    s5_c <= s4_c;
-    s5_a <= s4_a;
-    s5_b <= s4_b;
-    endrule
- //-------------------------------------------Stage 5: Add Stage------------------------------------------------------------------------------------------
-    rule s5;
-        Bit#(32) axb = extend(rg_stage4_op);
-        Bit#(32) stage5_op;
-        Bit#(8) t = 8'd0;
-        stage5_op[3:0]      =   obj_cla.get(  s5_c[3:0],   axb[3:0], 1'b0)[4:1];
-        t[0]                =   obj_cla.get(  s5_c[3:0],   axb[3:0], 1'b0)[0];
-        stage5_op[7:4]      =   obj_cla.get(  s5_c[7:4],   axb[7:4], t[0])[4:1];
-        t[1]                =   obj_cla.get(  s5_c[7:4],   axb[7:4], t[0])[0];
-        stage5_op[11:8]     =   obj_cla.get( s5_c[11:8],  axb[11:8], t[1])[4:1];
-        t[2]                =   obj_cla.get( s5_c[11:8],  axb[11:8], t[1])[0];
-        stage5_op[15:12]    =   obj_cla.get(s5_c[15:12], axb[15:12], t[2])[4:1];
-        t[3]                =   obj_cla.get(s5_c[15:12], axb[15:12], t[2])[0];
-        stage5_op[19:16]    =   obj_cla.get(s5_c[19:16], axb[19:16], t[3])[4:1];
-        t[4]                =   obj_cla.get(s5_c[19:16], axb[19:16], t[3])[0];
-        stage5_op[23:20]    =   obj_cla.get(s5_c[23:20], axb[23:20], t[4])[4:1];
-        t[5]                =   obj_cla.get(s5_c[23:20], axb[23:20], t[4])[0];
-        stage5_op[27:24]    =   obj_cla.get(s5_c[27:24], axb[27:24], t[5])[4:1];
-        t[6]                =   obj_cla.get(s5_c[27:24], axb[27:24], t[5])[0];
-        stage5_op[31:28]    =   obj_cla.get(s5_c[31:28], axb[31:28], t[6])[4:1];
-        t[7]                =   obj_cla.get(s5_c[31:28], axb[31:28], t[6])[0];
+    rg_stage4_op = stage4_op;
+    
+    s5_c = s4_c;
+    s5_a = s4_a;
+    s5_b = s4_b;
+    //----------------------------------------------------------------------------------------------------------------------------------
+    Bit#(32) axb = signExtend(rg_stage4_op);
+    Bit#(32) stage5_op;
+    Bit#(8) carry = 8'd0;
+    stage5_op[3:0]          =   obj_cla.get(  s5_c[3:0],   axb[3:0],     1'b0)[4:1];
+    carry[0]                =   obj_cla.get(  s5_c[3:0],   axb[3:0],     1'b0)[0];
+    stage5_op[7:4]          =   obj_cla.get(  s5_c[7:4],   axb[7:4], carry[0])[4:1];
+    carry[1]                =   obj_cla.get(  s5_c[7:4],   axb[7:4], carry[0])[0];
+    stage5_op[11:8]         =   obj_cla.get( s5_c[11:8],  axb[11:8], carry[1])[4:1];
+    carry[2]                =   obj_cla.get( s5_c[11:8],  axb[11:8], carry[1])[0];
+    stage5_op[15:12]        =   obj_cla.get(s5_c[15:12], axb[15:12], carry[2])[4:1];
+    carry[3]                =   obj_cla.get(s5_c[15:12], axb[15:12], carry[2])[0];
+    stage5_op[19:16]        =   obj_cla.get(s5_c[19:16], axb[19:16], carry[3])[4:1];
+    carry[4]                =   obj_cla.get(s5_c[19:16], axb[19:16], carry[3])[0];
+    stage5_op[23:20]        =   obj_cla.get(s5_c[23:20], axb[23:20], carry[4])[4:1];
+    carry[5]                =   obj_cla.get(s5_c[23:20], axb[23:20], carry[4])[0];
+    stage5_op[27:24]        =   obj_cla.get(s5_c[27:24], axb[27:24], carry[5])[4:1];
+    carry[6]                =   obj_cla.get(s5_c[27:24], axb[27:24], carry[5])[0];
+    stage5_op[31:28]        =   obj_cla.get(s5_c[31:28], axb[31:28], carry[6])[4:1];
+    carry[7]                =   obj_cla.get(s5_c[31:28], axb[31:28], carry[6])[0];
         
-        rg_stage5_op <= stage5_op;
-        $display("%d x %d + %d = %d", s5_a,s5_b,s5_c, stage5_op);
-    endrule
+    rg_stage5_op = stage5_op; 
 
     method Action put(Bit#(8) a, Bit#(8) b, Bit#(32) c);
        rg_a <= a;
@@ -241,35 +226,82 @@ package int8_mac;
    return sum;
   endmethod
   endmodule
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+(*always_ready*)
+interface Ifc_testinpint8;
+method Action putcnt( Bit#(11) cnt );       //Number of Test Cases
+method Bit#(8)  getA;
+method Bit#(8)  getB;
+method Bit#(32) getC;
+method Bit#(32) getmac;
+endinterface
+
+import "BVI" testinpint8 =
+module mk_testinpint8(Ifc_testinpint8);
+    method putcnt( cnt ) enable(EN);
+    method outA getA;
+    method outB getB;
+    method outC getC;
+    method mac  getmac;
+
+    default_reset rst(rst);
+    default_clock clk(CLK, (*unused*) CLK_GATE);
+endmodule
 
 module mkTb(Empty);
-    
-    Reg#(Bit#(8)) a <- mkReg(pack({8'b00001010}));
-    Reg#(Bit#(8)) b <- mkReg(pack({8'b00001110}));
-    Reg#(int) i <- mkReg(0);
+        
+    Reg#(int) crg_bc        <- mkReg(0);
+    Reg#(Bit#(8)) rg_A      <- mkReg(?);
+    Reg#(Bit#(8)) rg_B      <- mkReg(?);
+    Reg#(Bit#(32)) rg_C     <- mkReg(?);
+    Reg#(Bit#(32)) rg_MAC   <- mkReg(?);
 
-    Ifc_Mult8 obj_mul <- mk_SignedMul8;
+    Reg#(Bit#(11)) fail  <- mkReg(0);
+    Bit#(11) no_test_case = 11'd1048;
+
+    Ifc_Mult8           obj_mac        <- mk_SignedMul8;
+    
+    Ifc_testinpint8     inp            <- mk_testinpint8;          
+    
+    Reg#(Bit#(8))   as1                 <- mkReg(?);
+    Reg#(Bit#(8))   bs1                 <- mkReg(?);
+    Reg#(Bit#(32))  cs1                 <- mkReg(?);
+    Reg#(Bit#(32))  s1_MAC              <- mkReg(?);
 
     rule start;
-        obj_mul.put(a,b,32'd5);
-        a<= a+1; b<= b-1;
-        i <= i+1;
+        inp.putcnt(no_test_case);
+        rg_A      <= inp.getA;
+        rg_B      <= inp.getB;
+        rg_C      <= inp.getC;
+        rg_MAC    <= inp.getmac;
+        obj_mac.put(rg_A,rg_B,rg_C);
+        crg_bc    <= crg_bc + 1 ;  
     endrule
 
-    rule comp (i > 5);
-        //Bit#(16) out = obj_mul.get();
-        //$display("%d * %d = %d", a, b, out);
+    rule latency;
+    as1     <= rg_A;           
+    bs1     <= rg_B;
+    cs1     <= rg_C;
+    s1_MAC  <= rg_MAC;
     endrule
 
-    rule fin (i==10);
+    rule comp (crg_bc > 1);
+        Bit#(32) out = obj_mac.get();
+        if(out!=s1_MAC) begin
+          $display("%d * %d + %d = %d  expected: %d", as1, bs1, cs1, out, s1_MAC);
+          fail <= fail+1;
+        end
+    endrule
+
+    rule fin (crg_bc == unpack({'0,pack(no_test_case)}));
+        $display("PASS: %d  FAIL: %d", pack(no_test_case)-fail, fail);
         $finish(0);
     endrule
 
 endmodule
 
 
-
-
-endpackage : int8_mac
+endpackage 

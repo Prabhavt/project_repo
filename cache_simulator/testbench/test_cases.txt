@@ -1,0 +1,26 @@
+[
+    {"l1_size": 8, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 0, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 32, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 0, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 512, "l1_assoc": 64, "l1_blocksize": 64, "vc_blocks": 0, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 128, "l1_blocksize": 256, "vc_blocks": 0, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 512, "l1_blocksize": 2048, "vc_blocks": 0, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+
+    {"l1_size": 8, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 0, "l2_size": 32, "l2_assoc": 8, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 32, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 0, "l2_size": 512, "l2_assoc": 32, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 512, "l1_assoc": 64, "l1_blocksize": 64, "vc_blocks": 0, "l2_size": 2048, "l2_assoc": 64, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 128, "l1_blocksize": 256, "vc_blocks": 0, "l2_size": 4096, "l2_assoc": 128, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 512, "l1_blocksize": 2048, "vc_blocks": 0, "l2_size": 8192, "l2_assoc": 128, "trace_file": "gcc_trace.txt"},
+
+    {"l1_size": 8, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 12, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 32, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 14, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 512, "l1_assoc": 64, "l1_blocksize": 64, "vc_blocks": 6, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 128, "l1_blocksize": 256, "vc_blocks": 8, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 512, "l1_blocksize": 2048, "vc_blocks": 10, "l2_size": 0, "l2_assoc": 0, "trace_file": "gcc_trace.txt"},
+
+    {"l1_size": 8, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 6, "l2_size": 32, "l2_assoc": 8, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 32, "l1_assoc": 8, "l1_blocksize": 32, "vc_blocks": 7, "l2_size": 512, "l2_assoc": 32, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 512, "l1_assoc": 64, "l1_blocksize": 64, "vc_blocks": 8, "l2_size": 2048, "l2_assoc": 64, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 128, "l1_blocksize": 256, "vc_blocks": 4, "l2_size": 4096, "l2_assoc": 128, "trace_file": "gcc_trace.txt"},
+    {"l1_size": 1024, "l1_assoc": 512, "l1_blocksize": 2048, "vc_blocks": 5, "l2_size": 8192, "l2_assoc": 128, "trace_file": "gcc_trace.txt"}
+
+]

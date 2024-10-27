@@ -63,7 +63,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
     Reg#(Bit#(32))      rg_greaterOperand_stage7     <-    mkReg(?);
     Reg#(Bit#(32))      rg_smallerOperand_stage7     <-    mkReg(?);
     Reg#(Bit#(8))       rg_exp_diff_s7               <-    mkReg(?);
-    Reg#(Bit#(27))      rg_shiftedmantissa           <-    mkReg(?);
+    Reg#(Bit#(29))      rg_shiftedmantissa           <-    mkReg(?);
     Reg#(Bit#(2))       exception_s7                 <-    mkReg(?);
     Reg#(Bool)          rg_stage7_valid              <-    mkDReg(False);
 
@@ -173,22 +173,29 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
     rule stage5(rg_stage5_valid);
 
         Bit#(8) w_exp;
-        Bit#(23) mantissa;
+        Bit#(23) mantissa; 
+        Bit#(3) w_GRS_bf16;
 
         case(exception_s4)        
         2'd3: begin 
                   Bit#(23) w_mantissa_intermediate;
-                  Bit#(16) usignedmul   = obj_unsignedmul.get();
-                  w_exp = mulexpadd_stage4;
-
+                  Bit#(9) rounded_mantissa_bf16;
+                  Bit#(16) usignedmul               = obj_unsignedmul.get();
+                  w_exp                             = mulexpadd_stage4;
+                  w_GRS_bf16                        = (usignedmul[15]==1'b1) ? {usignedmul[7:6], |usignedmul[5:0]} : { usignedmul[6:5], |usignedmul[4:0] };
+                  
                   if(usignedmul[15]==1)
                   begin 
-                      w_exp= w_exp+1;
-                      w_mantissa_intermediate   = {usignedmul[14:0],'0};
-                  end
+                      w_exp                         = w_exp+1; 
+                      rounded_mantissa_bf16         = round_bf16(w_GRS_bf16, {1'b1,usignedmul[14:8]});
+                      w_mantissa_intermediate       = {rounded_mantissa_bf16[6:0],'0};
+                      w_exp                         = (rounded_mantissa_bf16[8]==1) ? w_exp + 1 : w_exp; 
+                  end 
                   else
-                  begin 
-                      w_mantissa_intermediate   = {usignedmul[13:0],'0};
+                  begin  
+                      rounded_mantissa_bf16         = round_bf16(w_GRS_bf16, {1'b1,usignedmul[13:7]});
+                      w_mantissa_intermediate       = {rounded_mantissa_bf16[6:0],'0};
+                      w_exp                         = (rounded_mantissa_bf16[8]==1) ? w_exp + 1 : w_exp; 
                   end
              //If after multiplication result comes out to have exponent={'1}, then we saturate the number to inf 
                   mantissa    =  w_exp != {'1} ? w_mantissa_intermediate : {'0}; 
@@ -213,7 +220,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
         //Assigning greater of two number wrt exponent to rg_greaterOperand and smaller to rg_smallerOperand 
         rg_greaterOperand             <=    mul_result[30:23] >= rg_c_stage4[30:23] ? mul_result : rg_c_stage4;
         rg_smallerOperand             <=    mul_result[30:23] >= rg_c_stage4[30:23] ? rg_c_stage4 : mul_result;
-        rg_stage6_valid     <=    True;
+        rg_stage6_valid               <=    True;
 
     endrule
 
@@ -251,7 +258,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
         begin
             //Preserving sign
             rg_greaterOperand_stage6                    <= (rg_greaterOperand[22:0] != 23'd0) ? {rg_greaterOperand[31], 8'd255, rg_greaterOperand[22:0]} : {rg_greaterOperand[31], 8'd255, 23'd0} ;    
-            rg_smallerOperand_stage6                                 <= (rg_smallerOperand[22:0] != 23'd0) ? {rg_smallerOperand[31], 8'd255, rg_smallerOperand[22:0]} : {rg_smallerOperand[31], 8'd255, 23'd0} ;
+            rg_smallerOperand_stage6                    <= (rg_smallerOperand[22:0] != 23'd0) ? {rg_smallerOperand[31], 8'd255, rg_smallerOperand[22:0]} : {rg_smallerOperand[31], 8'd255, 23'd0} ;
             rg_exp_diff_s6                              <= 8'd255;
 
             //exception=1 if number is NaN          
@@ -275,7 +282,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
 // Shifting mantissa of operand with smaller exponent, taking 24 bit output, as we need information of MSB for mantissa addition
 // for example if we shift 1.1001 by 1 place. We will have 0.11001, here we need to know the MSB before it gets added to other mantissa
 // 3 extra bit at LSB of mantissa to account for Guard Round Sticky bit        
-        Bit#(27) shiftedmantissa             =   rightshift({w_smallerOperand[22:0],3'd0}, rightshiftcount);
+        Bit#(29) shiftedmantissa             =   rightshift({w_smallerOperand[22:0],5'd0}, rightshiftcount);
 
         rg_greaterOperand_stage7            <=   w_greaterOperand;
         rg_smallerOperand_stage7            <=   w_smallerOperand;
@@ -297,13 +304,13 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
         Bit#(32) w_greaterOperand     =   rg_greaterOperand_stage7;
         Bit#(32) w_smallerOperand     =   rg_smallerOperand_stage7;
         Bit#(1)  w_mode               =   w_greaterOperand[31]^w_smallerOperand[31];
-        Bit#(27) w_shiftedmantissa    =   rg_shiftedmantissa; 
-        Bit#(29) w_MantiAddSub        =   mantiAddSub(w_mode,w_greaterOperand[31],{1'b1,w_greaterOperand[22:0],3'd0},w_smallerOperand[31],w_shiftedmantissa);
-        Bit#(25) w_addedmantissa      =   w_MantiAddSub[27:3];
-        Bit#(1)  w_sign               =   w_MantiAddSub[28];
+        Bit#(29) w_shiftedmantissa    =   rg_shiftedmantissa; 
+        Bit#(31) w_MantiAddSub        =   mantiAddSub(w_mode,w_greaterOperand[31],{1'b1,w_greaterOperand[22:0],5'd0},w_smallerOperand[31],w_shiftedmantissa);
+        Bit#(25) w_addedmantissa      =   w_MantiAddSub[29:5];
+        Bit#(1)  w_sign               =   w_MantiAddSub[30];
         
         //------Guard Round Sticky--------
-        rg_GRS                       <=   (w_MantiAddSub[27]==1'b1) ? {w_MantiAddSub[3:2], |w_MantiAddSub[1:0]} : w_MantiAddSub[2:0];
+        rg_GRS                       <=   (w_MantiAddSub[29]==1'b1) ? {w_MantiAddSub[4:3], |w_MantiAddSub[2:0]} : {w_MantiAddSub[5:4],|w_MantiAddSub[3:0]};
         
         rg_sign_stage8               <=   w_sign;           //sign calcualte       
         rg_exponent_stage8           <=   w_greaterOperand[30:23];
@@ -332,7 +339,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
                 mantissa[0]             =   w_GRS[2];
                 w_GRS[2]                =   w_GRS[1];
                 w_GRS[1]                =   1'b0;
-                Bit#(25) rounded_value  =   round(w_GRS, {1'b1,mantissa});
+                Bit#(25) rounded_value  =   round_fp32(w_GRS, {1'b1,mantissa});
                 mantissa                =   rounded_value[22:0];
                 out                    <=   {rg_sign_stage8, (rounded_value[24]==1) ? exponent + 1 : exponent, mantissa};
             end
@@ -343,7 +350,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
                 w_GRS[0]                =   |w_GRS[1:0];
                 w_GRS[1]                =   w_GRS[2];
                 w_GRS[2]                =   rg_addedmantissa_stage8[0];
-                Bit#(25) rounded_value  =   round(w_GRS, {1'b1,mantissa});
+                Bit#(25) rounded_value  =   round_fp32(w_GRS, {1'b1,mantissa});
                 mantissa                =   rounded_value[24]==1 ? rounded_value[23:1] : rounded_value[22:0];
                 out                    <=   {rg_sign_stage8, (rounded_value[24]==1) ? exponent + 1 : exponent, mantissa};
             end
@@ -352,7 +359,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
                 Bit#(8) exponent        =   rg_exponent_stage8;
                 Bit#(23) mantissa       =   rg_addedmantissa_stage8[22:0];
 
-                Bit#(25) rounded_value  =   round(w_GRS, {1'b1,mantissa});
+                Bit#(25) rounded_value  =   round_fp32(w_GRS, {1'b1,mantissa});
                 mantissa                =   rounded_value[24]==1 ? rounded_value[23:1] : rounded_value[22:0];
                 out                    <=   {rg_sign_stage8, (rounded_value[24]==1) ? exponent + 1 : exponent, mantissa};
             end
@@ -689,14 +696,14 @@ endfunction
 //              If exp_a and exp_b are same, there could be a case where mantissa_a - mantissa_b can lead to sign change
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-function Bit#(29) mantiAddSub(Bit#(1) mode, Bit#(1) sgn_a, Bit#(27) a, Bit#(1) sgn_b, Bit#(27) b);
-    Bit#(29)    out;
-    Bit#(29)    extended_a    =   (a > b) ? zeroExtend(a) : zeroExtend(b);
-    Bit#(29)    extended_b    =   (a > b) ? zeroExtend(b) : zeroExtend(a);
+function Bit#(31) mantiAddSub(Bit#(1) mode, Bit#(1) sgn_a, Bit#(29) a, Bit#(1) sgn_b, Bit#(29) b);
+    Bit#(30)    out;
+    Bit#(30)    extended_a    =   (a > b) ? zeroExtend(a) : zeroExtend(b);
+    Bit#(30)    extended_b    =   (a > b) ? zeroExtend(b) : zeroExtend(a);
     Bit#(1)     sign          =   (a > b) ? sgn_a : sgn_b;
     
     out   =   ( mode == 0 ) ? extended_a + extended_b : extended_a - extended_b; 
-    return    {sign,out[27:0]};
+    return    {sign,out[29:0]};
 
 endfunction
 
@@ -715,7 +722,7 @@ endfunction
 //------------------------------------------Mantissa right shift--------------------------------------------------------------------------------------------------------------
 //Description: For floating point addition we need to align the decimal point. We shift the operand {1.mantissa} by (exp_greater - exp_smaller)
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-function Bit#(27) rightshift(Bit#(26) in, Bit#(8) shift);
+function Bit#(29) rightshift(Bit#(28) in, Bit#(8) shift);
     return    {1'b1, in} >> shift;
 endfunction
 
@@ -777,14 +784,38 @@ module mk_lzcounter(Ifc_lzcounter);
     endmethod 
 endmodule
 //--------------------------------------------------Rounding Block--------------------------------------------------------
-function Bit#(25) round(Bit#(3) grs, Bit#(24)mantissa);
+function Bit#(9) round_bf16(Bit#(3) grs, Bit#(8) mantissa);
+    Bool incr = False;
     if( ((grs[2]==1) && ((|grs[1:0]==1) || mantissa[0]==1)) ) begin
     mantissa = mantissa + 1;
+    incr=True;
     end
-    return    (mantissa==24'hffffff) ? {1'b1,mantissa} : {1'b0, mantissa};              // { 1, mantissa } -> here 1 is a signal to increment exponent
+    if(incr==False) begin
+      return  {1'b0, mantissa};                                          //xxx
+    end
+    else begin
+      return ((mantissa-1)== 8'hff) ? {1'b1,mantissa} : {1'b0, mantissa};
+    end                                                                                                        // {1,mantissa} -> 1 is a signal to increment exp
+endfunction
+
+function Bit#(25) round_fp32(Bit#(3) grs, Bit#(24)mantissa);
+    Bool incr = False;
+    if( ((grs[2]==1) && ((|grs[1:0]==1) || mantissa[0]==1)) ) begin
+    mantissa = mantissa + 1;
+    incr=True;
+    end
+    if(incr==False) begin
+      return {1'b0, mantissa};
+    end
+    else begin
+      return ((mantissa-1)== 24'hffffff) ? {1'b1,mantissa} : {1'b0, mantissa};
+    end                  // { 1, mantissa } -> here 1 is a signal to increment exponent
 endfunction
 
 //--------------------------------------------------------------END--------------------------------------------------------------------------------------------------------------
+
+
+//--------------------------------------------------------------Test Bench--------------------------------------------------------------------------------------------------------------
 
 (*always_ready*)
 interface Ifc_testinp;
@@ -795,7 +826,7 @@ method Bit#(32) getC;
 method Bit#(32) getmac;
 endinterface
 
-import "BVI" testinp =
+import "BVI" testinpbf16 =
 module mk_testinp(Ifc_testinp);
     method putcnt( cnt ) enable(EN);
     method outA getA;
@@ -808,15 +839,8 @@ module mk_testinp(Ifc_testinp);
 
 endmodule
 
-
-//--------------------------------------------------------------Test Bench--------------------------------------------------------------------------------------------------------------
-
 module mkTb(Empty);
     Reg#(int) crg_bc <- mkReg(1);
-    Reg#(FloatingPoint#(8,23)) rg_a<- mkReg(6);        
-    Reg#(FloatingPoint#(8,23)) rg_b<- mkReg(2); //unpack({1'b1, 8'd0, 23'd0})
-    Reg#(FloatingPoint#(8,23)) rg_c<- mkReg(5);
-
 
     Reg#(FloatingPoint#(8,23)) rg_A_fp32 <- mkReg(?);
     Reg#(FloatingPoint#(8,23)) rg_B_fp32 <- mkReg(?);
@@ -824,6 +848,8 @@ module mkTb(Empty);
     Reg#(Bit#(16)) rg_A_bf16 <- mkReg(?);
     Reg#(Bit#(16)) rg_B_bf16 <- mkReg(?);
     Reg#(Bit#(32)) rg_C_fp32 <- mkReg(?);
+    Reg#(Bit#(32)) rg_MAC    <- mkReg(?);
+
     
     Reg#(Bit#(11)) fail <- mkReg(0);
     Bit#(11) no_test_case = 11'd1000;
@@ -831,23 +857,23 @@ module mkTb(Empty);
     Ifc_testinp inp         <- mk_testinp;
     Ifc_bfloat16_main mac   <- mk_bfloat16_main;          
     
-        Reg#(FloatingPoint#(8,23)) as1 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) bs1 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs1 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs2 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs3 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs4 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs5 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs6 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs7 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs8 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) cs9 <- mkReg(?); 
-        Reg#(FloatingPoint#(8,23)) as2 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) bs2 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) as3 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) bs3 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) as4 <- mkReg(?);
-        Reg#(FloatingPoint#(8,23)) bs4 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) as1 <- mkReg(?);       Reg#(Bit#(32)) res1 <- mkReg(?);        
+        Reg#(FloatingPoint#(8,23)) bs1 <- mkReg(?);       Reg#(Bit#(32)) res2 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs1 <- mkReg(?);       Reg#(Bit#(32)) res3 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs2 <- mkReg(?);       Reg#(Bit#(32)) res4 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs3 <- mkReg(?);       Reg#(Bit#(32)) res5 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs4 <- mkReg(?);       Reg#(Bit#(32)) res6 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs5 <- mkReg(?);       Reg#(Bit#(32)) res7 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs6 <- mkReg(?);       Reg#(Bit#(32)) res8 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs7 <- mkReg(?);       Reg#(Bit#(32)) res9 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs8 <- mkReg(?);       Reg#(Bit#(32)) res10 <- mkReg(?);
+        Reg#(FloatingPoint#(8,23)) cs9 <- mkReg(?);       
+        Reg#(FloatingPoint#(8,23)) as2 <- mkReg(?);       
+        Reg#(FloatingPoint#(8,23)) bs2 <- mkReg(?);       
+        Reg#(FloatingPoint#(8,23)) as3 <- mkReg(?);       
+        Reg#(FloatingPoint#(8,23)) bs3 <- mkReg(?);       
+        Reg#(FloatingPoint#(8,23)) as4 <- mkReg(?);       
+        Reg#(FloatingPoint#(8,23)) bs4 <- mkReg(?);       
         Reg#(FloatingPoint#(8,23)) as5 <- mkReg(?);
         Reg#(FloatingPoint#(8,23)) bs5 <- mkReg(?);
         Reg#(FloatingPoint#(8,23)) as6 <- mkReg(?);
@@ -861,36 +887,32 @@ module mkTb(Empty);
         Reg#(FloatingPoint#(8,23)) as10 <- mkReg(?);
         Reg#(FloatingPoint#(8,23)) bs10 <- mkReg(?);
         Reg#(FloatingPoint#(8,23)) cs10 <- mkReg(?); 
-        // Reg#(FloatingPoint#(8,23)) as11 <- mkReg(?);
-        // Reg#(FloatingPoint#(8,23)) bs11 <- mkReg(?);
-        // Reg#(FloatingPoint#(8,23)) cs11 <- mkReg(?);   
-
     rule rl_c;
             inp.putcnt(no_test_case);
             rg_A_bf16 <= inp.getA;
             rg_B_bf16 <= inp.getB;
             rg_C_fp32 <= inp.getC;
-
+            rg_MAC    <= inp.getmac;
             mac.put(rg_A_bf16, rg_B_bf16, rg_C_fp32);
      crg_bc <= crg_bc + 1 ;    
     endrule 
 
     rule pipe;
 
-    as1 <= unpack({rg_A_bf16,16'd0});           
-    bs1 <= unpack({rg_B_bf16,16'd0});
+    as1 <= unpack({rg_A_bf16,16'd0});               
+    bs1 <= unpack({rg_B_bf16,16'd0});   
     cs1 <= unpack(rg_C_fp32);
-    as2 <= as1;
-    bs2 <= bs1;
-    cs2 <= cs1;
-    as3 <= as2;
-    bs3 <= bs2;
-    cs3 <= cs2;
-    as4 <= as3;
-    bs4 <= bs3;
-    cs4 <= cs3;
-    as5 <= as4;
-    bs5 <= bs4;
+    as2 <= as1;                                 
+    bs2 <= bs1;          res1 <= rg_MAC;
+    cs2 <= cs1;          res2 <= res1;
+    as3 <= as2;          res3 <= res2;
+    bs3 <= bs2;          res4 <= res3;
+    cs3 <= cs2;          res5 <= res4;
+    as4 <= as3;          res6 <= res5;
+    bs4 <= bs3;          res7 <= res6;
+    cs4 <= cs3;          res8 <= res7;
+    as5 <= as4;          res9 <= res8;
+    bs5 <= bs4;          res10 <= res9; 
     cs5 <= cs4;
     as6 <= as5;
     bs6 <= bs5;
@@ -911,23 +933,18 @@ module mkTb(Empty);
 
     rule rl_finish;
        Bit#(32) mac_result = mac.get();
-       FloatingPoint#(8,23) sim_result= unpack({pack(as10*bs10)})+cs10;
+       Bit#(32) sim_result= res10;
        if(crg_bc > 11) begin
        Bit#(24) result_mantissa_diff = ( {1'b1,pack(sim_result)[22:0]} > {1'b1,mac_result[22:0]} ) ? {1'b1,pack(sim_result)[22:0]} - {1'b1,mac_result[22:0]} : {1'b1,mac_result[22:0]} - {1'b1,pack(sim_result)[22:0]} ;
        if ((mac_result[30:23] != pack(sim_result)[30:23])                               //exponent check 
                 || (result_mantissa_diff > 24'd1)                                       //Mantissa check ( 2 bit LSB error margin )
                 && (mac_result[30:23] != 8'b11111111) )                                 // Result == denormal
        begin
-         //$display("%d inpA: %b inpB: %b inpC: %b \n op: %be^%b expected: %be^%b",crg_bc-11,pack(as10)[31:16],pack(bs10)[31:16],cs10,{1'b1,mac_result[22:0]}, mac_result[30:23]-8'd127, {1'b1,pack(sim_result)[22:0]}, pack(sim_result)[30:23] - 8'd127);
-         //$display("op: %de^%d expected: %de^%d",{1'b1,mac_result[22:0]}, mac_result[30:23]-8'd127, {1'b1,pack(sim_result)[22:0]}, pack(sim_result)[30:23] - 8'd127);
-// Failed Case: mantissa(a*b) gives us a 8 bit number, whereas Floating Point a*b will have a 23 bit mantissa, this leads to 
-//              error in MAC. 
+         $display("%d inpA: %b inpB: %b inpC: %b \n op: %be^%b expected: %be^%b",crg_bc-11,pack(as10)[31:16],pack(bs10)[31:16],cs10,{1'b1,mac_result[22:0]}, mac_result[30:23]-8'd127, {1'b1,pack(sim_result)[22:0]}, pack(sim_result)[30:23] - 8'd127);
          fail<=fail+1;
        end
        else begin 
-        //$display("%d inpA: %b inpB: %b inpC: %b \n op: %be^%b expected: %be^%b",crg_bc-11,pack(as10)[31:16],pack(bs10)[31:16],cs10,{1'b1,mac_result[22:0]}, mac_result[30:23]-8'd127, {1'b1,pack(sim_result)[22:0]}, pack(sim_result)[30:23] - 8'd127);
-        int man= unpack({'0,1'b1,pack(sim_result)[22:0]});
-        $display("%d x 2^%d", man, 2**(unpack({24'd0,pack(sim_result)[30:23]}-32'd150)));  
+        //$display("%d inpA: %b inpB: %b inpC: %b \n op: %be^%b expected: %be^%b",crg_bc-11,pack(as10)[31:16],pack(bs10)[31:16],cs10,{1'b1,mac_result[22:0]}, mac_result[30:23]-8'd127, {1'b1,pack(sim_result)[22:0]}, pack(sim_result)[30:23] - 8'd127); 
        end
        end
 
