@@ -30,7 +30,7 @@ The program file names are:
     1. BF16MAC.bsv 
     2. int8_mac.bsv 
     3. unpipelined_BF16MAC.bsv 
-    4. tunpipelined_int8mac.bsv
+    4. unpipelined_int8mac.bsv
 
 ## To test your own inputs
 On testbench folder replace the data of 
