@@ -18,23 +18,27 @@ operations for the following data types.
 Note: Uncomment the testbench lines in .bsv file if not already done.
 
 On shell:
-```
-~$: build.sh <file name> mkTb <output filename > verilator
+```bash
+ubuntu@ubuntu:~$  build.sh  <file-name>  mkTb  <output-filename>  verilator
+
+Example:
+ubuntu@ubuntu:~$  build.sh BF16MAC.bsv mkTb sim verilator
 ```
 
 The program file names are:
-    \1. BF16MAC.bsv 
-    \2. int8_mac.bsv 
-    \3. unpipelined_BF16MAC.bsv 
-    \4. tunpipelined_int8mac.bsv
+    
+    1. BF16MAC.bsv 
+    2. int8_mac.bsv 
+    3. unpipelined_BF16MAC.bsv 
+    4. tunpipelined_int8mac.bsv
 
 ## To test your own inputs
 On testbench folder replace the data of 
 
-1. For int8 MAC:
-    A_binaryint8.txt, B_binaryint8.txt
-    C_binaryint8.txt
+    1. For int8 MAC:
+        A_binaryint8.txt, B_binaryint8.txt
+        C_binaryint8.txt
 
-2. For BF16 MAC:
-    A_bf16binary.txt, B_bf16binary.txt
-    C_bf16binary.txt
+    2. For BF16 MAC:
+        A_bf16binary.txt, B_bf16binary.txt
+        C_bf16binary.txt
