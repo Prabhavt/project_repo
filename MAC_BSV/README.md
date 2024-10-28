@@ -19,10 +19,10 @@ Note: Uncomment the testbench lines in .bsv file if not already done.
 
 On shell:
 ```bash
-ubuntu@ubuntu:~$  build.sh  <file-name>  mkTb  <output-filename>  verilator
+ubuntu@ubuntu:~$  ./build.sh  <file-name>  mkTb  <output-filename>  verilator
 
 Example:
-ubuntu@ubuntu:~$  build.sh BF16MAC.bsv mkTb sim verilator
+ubuntu@ubuntu:~$  ./build.sh BF16MAC.bsv mkTb sim verilator
 ```
 
 The program file names are:
