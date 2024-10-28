@@ -18,7 +18,9 @@ operations for the following data types.
 Note: Uncomment the testbench lines in .bsv file if not already done.
 
 On shell:
+```
 ~$: build.sh <file name> mkTb <output filename > verilator
+```
 
 The program file names are:
     1. BF16MAC.bsv 
