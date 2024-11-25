@@ -20,9 +20,10 @@ then
 	   	if [[ (! -d ./verilog ) ]]; then mkdir ./intermediate; mkdir ./verilog; fi 
 		bsc -q -verilog -elab -vdir ./verilog -bdir ./intermediate -info-dir ./intermediate -g $2 $1
 	        bsc -q -vsim verilator -vsearch ./verilog -fdir ./intermediate -e $2 -o $3
-	        mv $3 ./intermediate/
+	        ./$3
+		mv $3 ./intermediate/
 		#mv -f *.so *.o *.cxx *.h *.bo *.ba $3 ./intermediate > /dev/null; true
-		./intermediate/sim	
+		
 	else
 		echo "Enter correct simulator"
 	fi
