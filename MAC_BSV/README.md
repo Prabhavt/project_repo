@@ -42,3 +42,10 @@ On testbench folder replace the data of
     2. For BF16 MAC:
         A_bf16binary.txt, B_bf16binary.txt
         C_bf16binary.txt
+
+
+## BF16 MAC Architecture
+
+   ![BF16_Mul](https://github.com/user-attachments/assets/25e9983c-99e7-4e7d-b41f-d803c07bc547)  
+   ![BF16_Add](https://github.com/user-attachments/assets/ab6d8fb9-d316-41ea-bfa7-bcc456d866f5)
+
