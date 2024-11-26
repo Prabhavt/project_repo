@@ -27,10 +27,10 @@ ubuntu@ubuntu:~$  ./build.sh BF16MAC.bsv mkTb sim verilator
 
 The program file names are:
     
-    1. BF16MAC.bsv 
-    2. int8_mac.bsv 
-    3. unpipelined_BF16MAC.bsv 
-    4. unpipelined_int8mac.bsv
+    1. BF16MAC.bsv                         Pipelined BF16 MAC Design Completed & Verified using Bluespec testbench
+    2. int8_mac.bsv                        Pipelined int8 MAC Design Completed & Verified using Bluespec testbench
+    3. unpipelined_BF16MAC.bsv             Unpipelined BF16MAC Design Completed & Verified using Bluespec testbench
+    4. unpipelined_int8mac.bsv             Unpipelined int8 mac Design Completed & Verified using Bluespec testbench
 
 ## To test your own inputs
 On testbench folder replace the data of 
