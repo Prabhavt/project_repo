@@ -1,0 +1,20 @@
+( A and B are bf16 numbers ) 
+which means mantissa - 7 bits
+
+So mantissa multiplication will be 16 bits because its (1.mmmmmmmm)
+
+1.mmmmmmxxxxxxxx
+1.mmmmmmm -> round to nearest even
+
+Result AxB= Some bf16 number
+
+Now we need to add C ( which is a fp32 number )
+
+C is FP32 which means 23 bit mantissa
+
+Above result of AxB - bf16 no.
+we pad it with 0 
+1.mmmmmmm000000000... -> 23 bit mantissa
+
+now AxB + C -> fp32 
+We round it again

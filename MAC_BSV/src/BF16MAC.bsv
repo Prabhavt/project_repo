@@ -72,7 +72,7 @@ module mk_bfloat16_main(Ifc_bfloat16_main);
     Reg#(Bit#(8))       rg_exponent_stage8           <-    mkReg(?);
     Reg#(Bit#(1))       rg_sign_stage8               <-    mkReg(?);
     Reg#(Bit#(2))       exception_s8                 <-    mkReg(?);
-    Reg#(Bit#(3))       rg_GRS                          <-    mkReg(?);
+    Reg#(Bit#(3))       rg_GRS                       <-    mkReg(?);
     Reg#(Bool)          rg_stage8_valid              <-    mkDReg(False);    
     //--------------------------------------------Stage 9 Registers-----------------------------------------------------------------------------------------------------------
     Reg#(Bit#(32))       out                         <-    mkReg(?);
@@ -944,7 +944,7 @@ module mkTb(Empty);
          fail<=fail+1;
        end
        else begin 
-        //$display("%d inpA: %b inpB: %b inpC: %b \n op: %be^%b expected: %be^%b",crg_bc-11,pack(as10)[31:16],pack(bs10)[31:16],cs10,{1'b1,mac_result[22:0]}, mac_result[30:23]-8'd127, {1'b1,pack(sim_result)[22:0]}, pack(sim_result)[30:23] - 8'd127); 
+        $display("%d inpA: %b inpB: %b inpC: %b \n op: %be^%b expected: %be^%b",crg_bc-11,pack(as10)[31:16],pack(bs10)[31:16],cs10,{1'b1,mac_result[22:0]}, mac_result[30:23]-8'd127, {1'b1,pack(sim_result)[22:0]}, pack(sim_result)[30:23] - 8'd127); 
        end
        end
 
