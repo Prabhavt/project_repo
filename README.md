@@ -11,8 +11,13 @@
 		Code File:
 			1. matMul_cpu.c		// C Code for CPU Implementation
 			2. matMul_gpu.cu	// CUDA code for GPU
-
-	2. Asynchronous FIFO:
+   
+	2. Design a Cache and Memory hierarchy simulator
+ 		Implement a simulator to compare the performance, area, and energy of different 
+		memory hierarchy configurations, using a subset of the SPEC-2000 benchmark suite.
+		Implement L1, L2, victim cache with LRU replacement policy and different configs.
+	
+ 	3. Asynchronous FIFO:
 		Design a 16 byte deep Asynchronous FIFO using Verilog
 		
 		Code File:
