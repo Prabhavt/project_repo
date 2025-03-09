@@ -20,12 +20,6 @@ int main(){
     while(std::getline(file, line)){
         std::istringstream inp_stream(line);
         inp_stream >> pc >> outcome;
-        
-        //std::cout<<pc<<" ";
-        //std::cout<<hex2bin_address_32(pc)<<" \n";
     }
-
-    std::string test="110100111000";
-    std::cout<<bin2dec(test);
     return 0;
 }
