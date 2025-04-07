@@ -8,9 +8,6 @@
 #include <fstream>
 
 #define ADDR_SIZE 32
-#define M 4
-#define N 2
-#define SIZE_BT (1<<M)
 
 typedef enum{
     NOT_TAKEN,
@@ -28,15 +25,14 @@ class bTableEntry{
 
 class bTable{
     public:
+    int m,n;
     int misprediction, total_instr;
     int BHR;
     std::list <bTableEntry> entries;
-    bTable();
+    bTable(int _m, int _n);
 
     // Get prediction value from table and if prediction is false, set it to outcome value
-    states predict_bimodal(int _index, char outcome);
-
-    states predict_gShare(int _index, char outcome);
+    states predict(int _index, char outcome);
 
     void print_bTable();
 };
