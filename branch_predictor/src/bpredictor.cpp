@@ -5,21 +5,37 @@
 
 //-------------------------------------------------Main Function--------------------------------------------------
 int main(){
-    int             m, n;           //m -> low order PC bit to form prediction table index with 2^m entries;  n -> 
-    std::string     pc;
+    int             m, n=N;           //m -> low order PC bit to form prediction table index with 2^m entries;  n -> 
     char            outcome;
-    std::string     filepath= "/home/prabhav/LocalDisk/project_repo/branch_predictor/testbench/sample_trace.txt";
-    std::ifstream   file(filepath);
-    std::string     line;
+    unsigned long   pc;
+    unsigned        misprediction=0;
+    unsigned        total_instr=0;
+    bTable BHT;
+    states _outcome;
+    
 
-    if(!file.is_open()){
-        std::cerr << "Error Opening File" << std::endl;
-        return -1;
+    while(true){
+        std::cin >> std::hex >> pc >> outcome;
+        _outcome = (outcome == 't' ) ? states::TAKEN : states::NOT_TAKEN;
+        if(pc==-1){
+            break;
+        }
+        BHT.total_instr ++;
+        unsigned long tag  = (pc >> 2)&((1<<M)-1);  //Ignoring 2 LSB bit - word aligned instruction
+        
+        if(n==0){
+            unsigned long index= tag & ( (1 << M)-1 );
+            if( BHT.predict_bimodal(index, outcome) != _outcome ){
+                BHT.misprediction++;
+            }
+        }
+        else{
+            unsigned long index= ( (tag & ((1 << (M-N))-1)) | ((BHT.BHR^(tag>>(M-N))) << (M-N)) ) ;
+            if( BHT.predict_gShare(index, outcome) != _outcome ){
+                BHT.misprediction++;
+            }
+        }
     }
-
-    while(std::getline(file, line)){
-        std::istringstream inp_stream(line);
-        inp_stream >> pc >> outcome;
-    }
+    BHT.print_bTable();
     return 0;
 }

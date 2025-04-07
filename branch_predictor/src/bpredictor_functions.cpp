@@ -1,27 +1,64 @@
 #include "bpredictor_defines.h"
-std::string hex2bin_address_32(std::string pc){
-    std::string pc_bin; 
-    int size_pc = pc.length();                      //size_pc -> number of nonzero digits of PC
-    int rem, div;
-    for(int i=size_pc - 1; i >= 0; i--){
-        int num= (pc[i]-'0') < 10 ? pc[i]-'0' : pc[i]-'a'+10; 
-        int itr=4;                                  //To represent every hex digit as 4 bits
-        while(itr>0){
-            pc_bin.append((num%2)?"1":"0");
-            num/=2;
-            itr--;
-        }  
-    }
-    std::cout<<std::endl;
-    return pc_bin;
-} 
 
-int bin2dec(std::string addr){
-    int index   =0;
-    int bin     =1;
-    for(int i=0; i<addr.length(); i++){
-        index+= (addr[i]-'0')*bin;
-        bin *=2;
+bTableEntry::bTableEntry(int _index, states _pred){
+    index =_index;
+    pred  = _pred;
+}
+
+bTable::bTable(){
+    for(int i = 0 ; i < SIZE_BT; i++){
+        entries.push_back(bTableEntry(i, states::WEAKLY_TAKEN));
     }
-    return index;
+    BHR=0;
+}
+
+states bTable::predict_gShare(int _index, char outcome){
+    for( std::list<bTableEntry>::iterator itr= entries.begin(); itr != entries.end(); itr++){
+        if( _index == itr -> index ){
+            if(itr -> pred <= 1){
+                int p            = (outcome == 't') ? (itr->pred+1) : states::NOT_TAKEN;
+                BHR              = (outcome == 't') ? (BHR>>1)|(1<<(N-1))&((1<<N)-1) : (BHR >> 1)&((1<<N)-1) ;
+                states prev_state= itr->pred;
+                itr->pred        = states(p);   
+                return prev_state <=1 ? states::NOT_TAKEN : states::TAKEN;
+            }else{
+                int p    = (outcome == 'n') ? (itr->pred-1) : states::TAKEN;
+                BHR      = (outcome == 'n') ? (BHR >> 1)&((1<<N)-1) : (BHR>>1)|(1<<(N-1))&((1<<N)-1);
+                states prev_state= itr->pred;
+                itr->pred= states(p);
+                return prev_state <=1 ? states::NOT_TAKEN : states::TAKEN;
+            }
+        }
+    }
+    return states::NOT_TAKEN;
+}
+states bTable::predict_bimodal(int _index, char outcome){
+    for( std::list<bTableEntry>::iterator itr= entries.begin(); itr != entries.end(); itr++){
+        if( _index == itr -> index ){
+            if(itr -> pred <= 1){
+                int p            = (outcome == 't') ? (itr->pred+1) : states::NOT_TAKEN;
+                states prev_state= itr->pred;
+                itr->pred        = states(p);
+                return prev_state <=1 ? states::NOT_TAKEN : states::TAKEN;
+            }else{
+                int p    = (outcome == 'n') ? (itr->pred-1) : states::TAKEN;
+                states prev_state= itr->pred;
+                itr->pred= states(p);
+                return prev_state <=1 ? states::NOT_TAKEN : states::TAKEN;
+            }
+        }
+    }
+    return states::NOT_TAKEN;
+}
+
+void bTable::print_bTable(){
+    std::cout<<"OUTPUT"<<std::endl;
+    std::cout<<"number of predictions: "<<total_instr<<std::endl;
+    std::cout<<"Miss Prediction: "<<misprediction<<std::endl;
+    std::cout<<"Miss Prediction (%): "<<(float)misprediction*100/total_instr<<"%"<<std::endl;
+    if(N==0)std::cout<<std::endl<<"FINAL   BIMODAL CONTENTS"<<std::endl;
+    else std::cout<<std::endl<<"FINAL   gShare CONTENTS"<<std::endl;
+    for(std::list<bTableEntry>::iterator itr= entries.begin(); itr != entries.end(); itr++){
+        std::cout<<itr->index<<"       "<<itr->pred<<std::endl;
+    }
 }
