@@ -1,6 +1,6 @@
 # Branch Predictor Simulator
 
-A C/C++ simulator for evaluating the performance of bimodal and gshare branch prediction strategies on benchmark trace files, developed as part of the CS6600: Advanced Computer Architecture course at IIT Madras.
+A C/C++ simulator for evaluating the performance of bimodal and gshare branch prediction strategies on benchmark trace files, developed as part of the CS6600: Computer Architecture course at IIT Madras.
 
 📚 Project Overview
 
