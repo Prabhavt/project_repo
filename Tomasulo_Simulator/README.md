@@ -47,7 +47,7 @@ trace.
 
 ## iv. Build Command
 ```
-  ubuntu@ubuntu:Tomasulo_Simulator$ ./build N S <trace_name>
+  ubuntu@ubuntu:Tomasulo_Simulator$ ./build.sh N S <trace_name>
   <trace_name> : gcc / perl
 ```
 
