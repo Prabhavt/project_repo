@@ -53,7 +53,7 @@ trace.
 
 ## v. Experiment
 Plots:
-For each trace (provided to you), plot IPC on the y axis and Scheduling Queue size (S) on the x
+For each trace, plot IPC on the y axis and Scheduling Queue size (S) on the x
 axis for S = 8, 16, 32, 64, 128, and 256. Produce a curve each for N = 2, 4, and 8.
 
 <p align="center">
