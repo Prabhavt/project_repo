@@ -60,7 +60,7 @@ axis for S = 8, 16, 32, 64, 128, and 256. Produce a curve each for N = 2, 4, and
   <img src="https://github.com/user-attachments/assets/d0bb6ba6-7ec2-4c00-aea5-fb819e67a50d">
 </p>
 
-[📊 Meta Data ](https://docs.google.com/spreadsheets/d/1VQENTrEkNfC-7Q20fedILziomy_0qKcAu0oyt3VvJcQ/edit?usp=sharing)
+[📊 Data ](https://docs.google.com/spreadsheets/d/1VQENTrEkNfC-7Q20fedILziomy_0qKcAu0oyt3VvJcQ/edit?usp=sharing)
 
 ## vi. Observation
   - As Scheduling Queue Size (S) increases, IPC also increases <br>
